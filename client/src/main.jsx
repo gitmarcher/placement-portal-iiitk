@@ -1,15 +1,13 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client"; // Import createRoot
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";
-
-// Polyfill for global
-
 import App from "./App";
+
 const root = document.getElementById("root");
-ReactDOM.render(
+
+ReactDOM.createRoot(root).render(
   <BrowserRouter>
     <App />
-  </BrowserRouter>,
-  root
+  </BrowserRouter>
 );

@@ -22,7 +22,7 @@ export default function StudentDriveForm({ details, handleFormClick }) {
   };
 
   return (
-    <div className=" right-0 border-gray-100 border-2 border-solid p-4 rounded-xl mt-2 mb-2 sm:mx-12">
+    <div className=" right-0 border-gray-100  border-2 border-solid p-4 rounded-xl  mb-2 sm:mx-12">
       <div className=" flex gap-3  w-full  rounded-xl mt-2 mb-2">
         <form
           onSubmit={handleSubmit}

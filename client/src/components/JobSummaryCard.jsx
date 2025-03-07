@@ -10,7 +10,8 @@ import { useState } from "react";
 import { MdBookmark } from "react-icons/md";
 import { MdOutlineBookmarkBorder } from "react-icons/md";
 import { toast } from "react-toastify";
-import Toast from "./Toast";
+// import Toast from "./Toast";
+
 
 function CompanyBanner({ job }) {
   const [isBookmarkClicked, handleBookmarkClicked] = useState(false);
@@ -46,18 +47,24 @@ function CompanyBanner({ job }) {
   }
 
   function handleBookmarkClick() {
-    handleBookmarkClicked((prev) => {
-      if (prev) {
-        toast.error("Removing from bookmarks");
-      } else {
-        toast.success("Adding to bookmarks");
-      }
-      return !prev;
-    });
+    try {
+      handleBookmarkClicked((prev) => {
+        console.log("Bookmark clicked",prev);
+        if (prev) {
+          toast.error("Removing from bookmarks");
+        } else {
+          toast.success("Adding to bookmarks");
+        }
+        return !prev;
+      })
+    } catch (error) {
+      console.error("Failed to toggle bookmark: ", error);
+      toast.error("Failed to toggle bookmark");
+    }
   }
   return (
-    <div className=" w-full font-ubuntu ">
-      <Toast />
+    <div className=" w-full font-ubuntu mt-3 ">
+      {/* <Toast /> */}
 
       {/* Handling LOGO,NAME,POSITION,OFFER TYPE */}
       <div className=" right-0 pl-[1.2rem]  border-gray-100 border-2 border-solid p-4   mb-2 sm:rounded-xl sm:mx-12">

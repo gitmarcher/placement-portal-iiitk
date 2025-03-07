@@ -55,7 +55,7 @@ function Dashboard() {
           <div className="flex-grow">
             <Main searchTerm={searchTerm} />
           </div>
-          <div>
+          <div className="hidden md:block">
             <Calendar />
           </div>
           <SidebarWithCalendar

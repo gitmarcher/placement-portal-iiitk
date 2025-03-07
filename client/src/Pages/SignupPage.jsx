@@ -20,7 +20,10 @@ const SignupPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-cover bg-center" style={{ backgroundImage: `url(${signupbg})`, backgroundSize: '70%', backgroundRepeat: 'no-repeat' }}>
-      <Navbar />
+        {/* <div className="fixed top-0 left-0 right-0 z-50">
+        <Navbar />
+      </div> */}
+      
       <div className="flex-grow flex items-center justify-center relative">
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="absolute inset-0 backdrop-blur-lg"></div>

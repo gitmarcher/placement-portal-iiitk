@@ -9,6 +9,8 @@ import ExperienceSection from "../components/ExperienceSection";
 import { IoChevronBackOutline } from "react-icons/io5";
 import { data, job, details, studentInfo } from "../../data";
 import styles from "./StudentDrive.module.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const StudentDrive = () => {
   const { id } = useParams();
@@ -27,94 +29,78 @@ const StudentDrive = () => {
   const handleCardClick = (id) => {
     setSelectedCard(id);
     navigate(`/drive/${id}`);
-    setDisplay((prev) => (prev === "1" ? "2" : "1"));
+    if (isMobile) {
+      setDisplay("2");
+    }
   };
 
   const toggleFormDisplay = () => setFormDisplay(!formDisplay);
 
-  const JobList = () => (
-    <section
-      className={`h-[90%] w-full overflow-y-auto ${styles.scrollbarHide} sm:w-[35vw]`}
-    >
-      {data.map((job) => (
-        <div
-          key={job.id}
-          className={`cursor-pointer ${
-            selectedCard === job.id ? "bg-coral-red/20" : "bg-white"
-          }`}
-          onClick={() => handleCardClick(job.id)}
-        >
-          <JobListCard job={job} id={selectedCard} />
-        </div>
-      ))}
-    </section>
-  );
-
-  const DetailSection = () => (
-    <section
-      className={`h-[90%] flex-1 overflow-y-auto overflow-x-hidden ${
-        isMobile ? (display === "1" ? "hidden" : "block") : "block"
-      }`}
-    >
-      <JobSummaryCard job={job} />
-      {formDisplay ? (
-        <StudentDriveForm
-          details={studentInfo}
-          handleFormClick={toggleFormDisplay}
-        />
-      ) : (
-        <>
-          <JobDetails details={details} stud_info={studentInfo} />
-          <div className="flex w-full justify-center mt-4">
-            <button className="button-31 pt-4" onClick={toggleFormDisplay}>
-              View application
-            </button>
-          </div>
-        </>
-      )}
-      <ExperienceSection />
-    </section>
-  );
-
   return (
     <>
+      <ToastContainer />
       <div className="sticky top-0 z-10 bg-white">
         <Navbar />
       </div>
-      <div className="relative h-screen overflow-hidden">
-        <div className="flex h-[calc(100vh-64px)]">
-          {isMobile ? (
-            display === "1" ? (
-              <JobList />
-            ) : (
-              <div>
-                <button
-                  className="flex align-middle items-center justify-center gap-1 m-2 h-[1.5rem]"
+      <div className="flex flex-col h-[calc(100vh-64px)]">
+        {/* Main content container with fixed height below navbar */}
+        <div className="flex w-full h-full overflow-hidden">
+          {/* Job List Section */}
+          {(!isMobile || display === "1") && (
+            <div className={`${isMobile ? 'w-full' : 'w-[35%]'} h-full flex mt-3 flex-col`}>
+              
+              <div className={`flex-1 overflow-y-auto ${styles.scrollbarHide}`}>
+                {data.map((job) => (
+                  <div
+                    key={job.id}
+                    className={`cursor-pointer ${selectedCard === job.id ? "bg-coral-red/20" : "bg-white"}`}
+                    onClick={() => handleCardClick(job.id)}
+                  >
+                    <JobListCard job={job} id={selectedCard} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Details Section */}
+          {(!isMobile || display === "2") && (
+            <div className={`${isMobile ? 'w-full' : 'w-[65%]'} h-full flex flex-col`}>
+              {isMobile && (
+                <button 
+                  className="flex items-center gap-1 m-2 h-[1.5rem]" 
                   onClick={() => setDisplay("1")}
                 >
                   <IoChevronBackOutline />
-                  <h1>Back</h1>
+                  <span>Back</span>
                 </button>
-                <DetailSection />
+              )}
+              
+              <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                <JobSummaryCard job={job} />
+                
+                {formDisplay ? (
+                  <StudentDriveForm
+                    details={studentInfo}
+                    handleFormClick={toggleFormDisplay}
+                  />
+                ) : (
+                  <>
+                    <JobDetails details={details} stud_info={studentInfo} />
+                    <div className="flex w-full justify-center mt-4">
+                      <button className="button-31 pt-4" onClick={toggleFormDisplay}>
+                        View application
+                      </button>
+                    </div>
+                  </>
+                )}
+                
+                <ExperienceSection />
               </div>
-            )
-          ) : (
-            <>
-              <JobList />
-              <DetailSection />
-            </>
+            </div>
           )}
         </div>
       </div>
-      <style jsx>{`
-        .${styles.scrollbarHide}::-webkit-scrollbar {
-          display: none;
-        }
-        .${styles.scrollbarHide} {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </>
   );
 };

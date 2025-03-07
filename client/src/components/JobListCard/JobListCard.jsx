@@ -9,7 +9,7 @@ const JobListCard = ({ job, id }) => {
         className="w-12 h-12 rounded-full object-cover"
       />
       <div className="ml-4 w-full">
-        <h2 className="text-2xl font-bold text-gray-900">{job.name}</h2>
+        <h2 className="text-xl font-bold text-gray-700">{job.name}</h2>
         <p className="text-md font-semibold text-slate-gray">{job.role}</p>
         <div className="flex justify-between w-full ">
           <p className="text-sm font-semibold text-custom-red ">{job.type}</p>

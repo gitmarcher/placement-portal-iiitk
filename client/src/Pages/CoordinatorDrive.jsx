@@ -50,9 +50,9 @@ const StudentDrive = () => {
   const handleTabClick = (event) => setCurrentTab(event.currentTarget.id);
 
   const JobList = () => (
-    <section
-      className={`h-[90%] overflow-y-auto ${styles.scrollbarHide} ${
-        isMobile ? "w-full" : "w-[35vw]"
+    <div 
+      className={`${styles.scrollbarHide} h-[calc(100vh-64px)] overflow-y-auto ${
+        isMobile ? "w-full" : "w-[35%]"
       }`}
     >
       {data.map((job) => (
@@ -66,11 +66,11 @@ const StudentDrive = () => {
           <JobListCard job={job} id={selectedCard} />
         </div>
       ))}
-    </section>
+    </div>
   );
 
   const TabSection = () => (
-    <div className="mx-12 right-0 w-[65%] border-gray-100 p-4 rounded-xl mt-2 mb-2">
+    <div className="mx-4 border-gray-100 p-4 rounded-xl mt-2 mb-2">
       <div className="flex align-middle">
         {["results", "experiences"].map((tab) => (
           <div
@@ -91,7 +91,9 @@ const StudentDrive = () => {
   );
 
   const DetailSection = () => (
-    <section className="h-[90%] flex-1 overflow-y-auto overflow-x-hidden">
+    <div className={`${styles.scrollbarHide} h-[calc(100vh-64px)] overflow-y-auto ${
+      isMobile ? "w-full" : "w-[65%]"
+    }`}>
       <JobSummaryCard job={job} />
       {formDisplay ? (
         <StudentDriveForm
@@ -127,38 +129,36 @@ const StudentDrive = () => {
       ) : (
         <Results />
       )}
-    </section>
+    </div>
   );
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-white">
+      <div className="sticky top-0 z-50 bg-white">
         <Navbar />
       </div>
-      <div className="relative h-screen overflow-hidden">
-        <div className="flex h-[calc(100vh-64px)]">
-          {isMobile ? (
-            display === "1" ? (
-              <JobList />
-            ) : (
-              <div className="w-full">
-                <button
-                  className="flex align-middle items-center justify-center gap-1 m-2 h-[1.5rem]"
-                  onClick={() => setDisplay("1")}
-                >
-                  <IoChevronBackOutline />
-                  <h1>Back</h1>
-                </button>
-                <DetailSection />
-              </div>
-            )
+      <div className="relative">
+        {isMobile ? (
+          display === "1" ? (
+            <JobList />
           ) : (
-            <>
-              <JobList />
+            <div className="w-full">
+              <button
+                className="flex align-middle items-center justify-center gap-1 m-2 h-[1.5rem]"
+                onClick={() => setDisplay("1")}
+              >
+                <IoChevronBackOutline />
+                <h1>Back</h1>
+              </button>
               <DetailSection />
-            </>
-          )}
-        </div>
+            </div>
+          )
+        ) : (
+          <div className="flex w-full">
+            <JobList />
+            <DetailSection />
+          </div>
+        )}
       </div>
       <style jsx>{`
         .${styles.scrollbarHide}::-webkit-scrollbar {

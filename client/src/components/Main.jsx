@@ -11,7 +11,7 @@ import IBM from "../assets/Company - Favicon.png";
 import "./Main.css";
 
 const JobCard = ({ job }) => (
-  <div className="border-gray-200 border-3 shadow-[0_0_20px_rgba(0,0,0,0.3)] p-4 rounded-xl mt-2 mx-2 mb-2">
+  <div className="border-gray-200 border-3  p-4 rounded-xl mt-2 mx-2 mb-2 shadow-xl border-2">
     <div className="flex flex-col gap-3 sm:gap-5">
       <div className="flex flex-row sm:flex-row justify-between sm:items-center gap-2 sm:gap-4">
         <div className="flex flex-col">
