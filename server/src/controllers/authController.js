@@ -25,6 +25,9 @@ const logout = async(req, res) => {
 
 const login = async (req, res) => {
     const { username, password, userType } = req.body;
+    console.log(username
+        ,password
+        ,userType);
 
     if (!['student', 'coordinator'].includes(userType)) {
         return res.status(400).json({ error: "Invalid user type" });
