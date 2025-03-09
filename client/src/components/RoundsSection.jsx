@@ -1,67 +1,76 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { FaPlus } from "react-icons/fa";
 
-const RoundsSection = ({ formData, handleChange }) => {
+const RoundsSection = ({ formData, setRounds }) => {
+  const [rounds, setLocalRounds] = useState(formData.rounds || []);
+
+  useEffect(() => {
+    setLocalRounds(formData.rounds || []);
+  }, [formData.rounds]);
+
+  const addRound = () => {
+    const newRounds = [
+      ...rounds,
+      { round_number: "", round_name: "", description: "" }
+    ];
+    setLocalRounds(newRounds);
+    setRounds(newRounds);
+  };
+
+  const updateRound = (index, field, value) => {
+    const updatedRounds = rounds.map((round, i) =>
+      i === index ? { ...round, [field]: value } : round
+    );
+    setLocalRounds(updatedRounds);
+    setRounds(updatedRounds);
+  };
+
   return (
-    <section className="mt-8 p-8">
-      <p className="text-xl font-semibold">Rounds:</p>
-      <div className="mt-[2rem]">
-        <div className="flex items-center mb-4">
-          <label htmlFor="round_number" className="w-40">
-            Round Number:
-          </label>
-          <input
-            type="text"
-            name="round_number"
-            id="round_number"
-            className="w-full border-2 border-solid border-gray-300 p-1 rounded-md"
-            value={formData.round_number}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="flex items-center mb-4">
-          <label htmlFor="round_name" className="w-40">
-            Round Name:
-          </label>
-          <input
-            type="text"
-            name="round_name"
-            id="round_name"
-            className="w-full border-2 border-solid border-gray-300 p-1 rounded-md"
-            value={formData.round_name}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="flex items-center mb-4">
-          <label htmlFor="description" className="w-40">
-            Description:
-          </label>
-          <input
-            type="text"
-            name="description"
-            id="description"
-            className="w-full border-2 border-solid border-gray-300 p-1 rounded-md"
-            value={formData.description}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="flex items-center mb-4">
-          <label htmlFor="selected_students" className="w-40">
-            Selected Students:
-          </label>
-          <input
-            type="text"
-            name="selected_students"
-            id="selected_students"
-            className="w-full border-2 border-solid border-gray-300 p-1 rounded-md"
-            value={formData.selected_students}
-            onChange={handleChange}
-          />
-        </div>
+    <div className="bg-white rounded-lg shadow-sm p-4">
+      <h2 className="text-lg font-medium text-coral-red mb-3">Rounds</h2>
+      <div className="space-y-3">
+        {rounds.map((round, index) => (
+          <div
+            key={index}
+            className="flex flex-col md:flex-row gap-2 bg-tertiary rounded-md p-2"
+          >
+            <input
+              name="round_number"
+              value={round.round_number || ""}
+              onChange={(e) =>
+                updateRound(index, "round_number", e.target.value)
+              }
+              placeholder="No."
+              className="w-full md:w-20 p-2 border border-slate-gray rounded-md focus:outline-none focus:ring-1 focus:ring-coral-red bg-white text-gray-700 placeholder-slate-gray text-sm"
+            />
+            <input
+              name="round_name"
+              value={round.round_name || ""}
+              onChange={(e) => updateRound(index, "round_name", e.target.value)}
+              placeholder="Name"
+              className="w-full md:w-40 p-2 border border-slate-gray rounded-md focus:outline-none focus:ring-1 focus:ring-coral-red bg-white text-gray-700 placeholder-slate-gray text-sm"
+            />
+            <input
+              name="description"
+              value={round.description || ""}
+              onChange={(e) =>
+                updateRound(index, "description", e.target.value)
+              }
+              placeholder="Description"
+              className="w-full p-2 border border-slate-gray rounded-md focus:outline-none focus:ring-1 focus:ring-coral-red bg-white text-gray-700 placeholder-slate-gray text-sm"
+            />
+          </div>
+        ))}
       </div>
-    </section>
+      <button
+        type="button"
+        onClick={addRound}
+        className="mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-coral-red text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-coral-red transition-colors duration-200"
+      >
+        <FaPlus className="w-3 h-3" />
+        Add Round
+      </button>
+    </div>
   );
 };
 

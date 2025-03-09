@@ -20,6 +20,9 @@ const EligibilitySection = ({
   ];
 
   const CheckBox = ({ label, name, options }) => {
+    const values = Array.isArray(formData.criteria[name])
+      ? formData.criteria[name]
+      : [];
     return (
       <div className="form-group mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -34,7 +37,7 @@ const EligibilitySection = ({
                 name={name}
                 value={option.value}
                 className="w-5 h-5 text-blue-600 rounded focus:ring-0 focus:ring-offset-0 border-gray-300 cursor-pointer"
-                checked={formData[name].includes(option.value)}
+                checked={values.includes(option.value)}
                 onChange={() => handleCheckboxChange(name, option.value)}
               />
               <label
@@ -55,143 +58,134 @@ const EligibilitySection = ({
       <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
         Eligibility
       </h2>
-
       <div className="space-y-6">
         <CheckBox
           label="Year/Semester"
           name="yearSemester"
           options={yearSemesterOptions}
         />
-
         <CheckBox label="Stream" name="stream" options={streamOptions} />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
-              htmlFor="minimumCGPA"
+              htmlFor="criteria.minimumCGPA"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Minimum CGPA
             </label>
             <input
               type="text"
-              name="minimumCGPA"
-              id="minimumCGPA"
+              name="criteria.minimumCGPA"
+              id="criteria.minimumCGPA"
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.minimumCGPA}
+              value={formData.criteria.minimumCGPA || ""}
               onChange={handleChange}
               placeholder="e.g., 7.5"
             />
           </div>
-
           <div className="form-group">
             <label
-              htmlFor="backlogs"
+              htmlFor="criteria.backlogs"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Backlogs
             </label>
             <input
               type="text"
-              name="backlogs"
-              id="backlogs"
+              name="criteria.backlogs"
+              id="criteria.backlogs"
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.backlogs}
+              value={formData.criteria.backlogs || ""}
               onChange={handleChange}
               placeholder="e.g., 0"
             />
           </div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
-              htmlFor="tenth_percentage"
+              htmlFor="criteria.tenth_percentage"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               10th Percentage
             </label>
             <input
               type="text"
-              name="tenth_percentage"
-              id="tenth_percentage"
+              name="criteria.tenth_percentage"
+              id="criteria.tenth_percentage"
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.tenth_percentage}
+              value={formData.criteria.tenth_percentage || ""}
               onChange={handleChange}
               placeholder="e.g., 85%"
             />
           </div>
-
           <div className="form-group">
             <label
-              htmlFor="twelfth_percentage"
+              htmlFor="criteria.twelfth_percentage"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               12th Percentage
             </label>
             <input
               type="text"
-              name="twelfth_percentage"
-              id="twelfth_percentage"
+              name="criteria.twelfth_percentage"
+              id="criteria.twelfth_percentage"
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.twelfth_percentage}
+              value={formData.criteria.twelfth_percentage || ""}
               onChange={handleChange}
               placeholder="e.g., 80%"
             />
           </div>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
-              htmlFor="graduation_degree"
+              htmlFor="criteria.graduation_degree"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Graduation Degree
             </label>
             <input
               type="text"
-              name="graduation_degree"
-              id="graduation_degree"
+              name="criteria.graduation_degree"
+              id="criteria.graduation_degree"
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.graduation_degree}
+              value={formData.criteria.graduation_degree || ""}
               onChange={handleChange}
               placeholder="e.g., B.Tech"
             />
           </div>
-
           <div className="form-group">
             <label
-              htmlFor="graduation_year"
+              htmlFor="criteria.graduation_year"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Graduation Year
             </label>
             <input
               type="text"
-              name="graduation_year"
-              id="graduation_year"
+              name="criteria.graduation_year"
+              id="criteria.graduation_year"
               className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.graduation_year}
+              value={formData.criteria.graduation_year || ""}
               onChange={handleChange}
               placeholder="e.g., 2025"
             />
           </div>
         </div>
-
         <div className="form-group">
           <label
-            htmlFor="work_experience_count"
+            htmlFor="criteria.work_experience_count"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
             Years of Experience
           </label>
           <input
             type="text"
-            name="work_experience_count"
-            id="work_experience_count"
+            name="criteria.work_experience_count"
+            id="criteria.work_experience_count"
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-            value={formData.work_experience_count}
+            value={formData.criteria.work_experience_count || ""}
             onChange={handleChange}
             placeholder="e.g., 0 (for freshers)"
           />

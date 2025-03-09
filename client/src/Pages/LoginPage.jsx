@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import Navbar from "../components/Navbar";
 import { login_img } from "../assets";
 import { login } from "../API/authentication";
 import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import { StudentCredContext } from "../contexts/StudentCredContext";
 
 const LoginPage = () => {
   const [userType, setUserType] = useState("student"); // Default to student login
@@ -14,6 +15,7 @@ const LoginPage = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { updateStudentCreds } = useContext(StudentCredContext);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -35,22 +37,22 @@ const LoginPage = () => {
         userType
       );
 
-      if (response.login) {
-        // Store user data in localStorage or context for app-wide access
-        localStorage.setItem(
-          "userData",
-          JSON.stringify({
-            userId: response.userId,
-            username: response.username,
-            userType: response.userType
-          })
-        );
+      console.log(response);
 
+      if (response.login) {
+        // Login successful
+        if (userType === "student") {
+          // Store student credentials in context
+          updateStudentCreds(response.userId, response.username);
+          console.log(response.userId);
+          console.log(response.username);
+        }
         // Check if profile is complete
         if (!response.profileComplete) {
           // Profile is incomplete, show message and redirect to profile completion
           toast.info(response.message);
-          const completionRoute = userType === "student" ? "/signup" : "/";
+          const completionRoute =
+            userType === "student" ? "/complete-profile" : "/";
           navigate(completionRoute);
         } else {
           // Profile is complete, proceed to dashboard

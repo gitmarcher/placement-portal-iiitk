@@ -8,7 +8,6 @@ const AboutWorkSection = ({ editorState, setEditorState }) => {
       <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
         About Work
       </h2>
-
       <div className="mt-4">
         <Editor
           editorState={editorState}
@@ -38,10 +37,7 @@ const AboutWorkSection = ({ editorState, setEditorState }) => {
             backgroundColor: "white",
             fontFamily: "inherit"
           }}
-          toolbarStyle={{
-            padding: "8px",
-            marginBottom: 0
-          }}
+          toolbarStyle={{ padding: "8px", marginBottom: 0 }}
         />
         <p className="mt-2 text-xs text-gray-500">
           Use the toolbar above to format your text. Add details about the job

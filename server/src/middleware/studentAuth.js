@@ -1,37 +1,27 @@
 const jwt = require('jsonwebtoken');
 const Creds = require('../models/studentCred');
 const Student = require('../models/studentModel');
-const protectRoute = async (req, res, next) => {
-    try{
-        let token = req.cookies.jwt;
-        if(!token){
-            return res.status(401).json({error: "Token not found"});
-        }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        if (!decoded){
-            return res.status(401).json({error:"Invalid token"});
-        }
-        let user = await Student.findOne({ creds: decoded.userId })
-                                // .populate('creds', '-password'); maybe add the creds data if needed
-        const creds = await Creds.findById(decoded.userId).select('-password');
+ 
 
-        if (!user) {
-            if (!creds) {
-                return res.status(401).json({ error: "Not authorized, user not found" });
-            }
+const protectAuth = async (req, res, next) => {
+  const token = req.cookies.jwt;
+  console.log("Token received:", token); // Debug
+  if (!token) {
+    console.log("No token found in cookies");
+    return res.status(401).json({ error: "No token, authorization denied" });
+  }
 
-            req.user = { creds, profileComplete: false };
-        } else {
-            req.user = { creds, profileComplete: true };
-        }
-        next();
-    }
-    catch(error)
-    {
-        console.error('Error in protectRoute middleware:', error.message);
-        res.status(401).json({error: "Internal Server Error"});      
-    }
-}
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded JWT:", decoded); // Debug
+    req.user = { _id: decoded.userId }; // Set _id directly on req.user
+    console.log("req.user set:", req.user); // Debug
+    next();
+  } catch (error) {
+    console.error("Token verification failed:", error.message);
+    return res.status(401).json({ error: "Invalid token" });
+  }
+};
 
-module.exports = protectRoute;
+module.exports = protectAuth; //

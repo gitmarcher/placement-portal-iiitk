@@ -24,6 +24,11 @@ const RequiredDataSection = ({ formData, handleCheckboxChange }) => {
     { value: "location", label: "Location Preference" }
   ];
 
+  // Defensive check to ensure requiredData is an array
+  const requiredData = Array.isArray(formData.requiredData)
+    ? formData.requiredData
+    : [];
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <div className="mb-4">
@@ -41,7 +46,7 @@ const RequiredDataSection = ({ formData, handleCheckboxChange }) => {
             <input
               type="checkbox"
               id={`required-${option.value}`}
-              checked={formData.requiredData.includes(option.value)}
+              checked={requiredData.includes(option.value)}
               onChange={() =>
                 handleCheckboxChange("requiredData", option.value)
               }
@@ -60,15 +65,15 @@ const RequiredDataSection = ({ formData, handleCheckboxChange }) => {
       {/* Container for displaying selected data */}
       <div
         className={`mt-4 p-3 bg-gray-50 rounded-md border border-gray-200 ${
-          formData.requiredData.length > 0 ? "block" : "hidden"
+          requiredData.length > 0 ? "block" : "hidden"
         }`}
       >
         {/* Display selected data with wrapping */}
         <div className="flex flex-wrap gap-2">
-          {formData.requiredData.map((data, index) => (
+          {requiredData.map((data, index) => (
             <span
               key={index}
-              className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded"
+              className="bg-coral-red text-white text-xs font-medium px-2.5 py-0.5 rounded"
             >
               {data}
             </span>

@@ -6,47 +6,43 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
       <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
         Drive Details
       </h2>
-
       <div className="flex flex-col-reverse gap-8 lg:flex-row">
-        {/* Form section */}
         <div className="w-full lg:w-3/4">
           <div className="grid grid-cols-1 gap-6">
             <div className="form-group">
               <label
-                htmlFor="companyName"
+                htmlFor="company_name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Company Name
               </label>
               <input
                 type="text"
-                name="companyName"
-                id="companyName"
+                name="company_name"
+                id="company_name"
                 className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                value={formData.companyName}
+                value={formData.company_name}
                 onChange={handleChange}
                 placeholder="Enter company name"
               />
             </div>
-
             <div className="form-group">
               <label
-                htmlFor="role"
+                htmlFor="type_of_role"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Roles
               </label>
               <input
                 type="text"
-                name="role"
-                id="role"
+                name="type_of_role"
+                id="type_of_role"
                 className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                value={formData.role}
+                value={formData.type_of_role}
                 onChange={handleChange}
                 placeholder="Enter roles (e.g., Software Engineer, Product Manager)"
               />
             </div>
-
             <div className="form-group">
               <label
                 htmlFor="company_logo"
@@ -64,46 +60,76 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 placeholder="https://example.com/logo.png"
               />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="form-group">
                 <label
-                  htmlFor="startDate"
+                  htmlFor="drive_date"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Start Date
+                  Drive Date
                 </label>
                 <input
                   type="date"
-                  name="startDate"
-                  id="startDate"
+                  name="drive_date"
+                  id="drive_date"
                   className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                  value={formData.startDate}
+                  value={formData.drive_date}
                   onChange={handleChange}
                 />
               </div>
-
               <div className="form-group">
                 <label
-                  htmlFor="endDate"
+                  htmlFor="deadline"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  End Date
+                  Deadline
                 </label>
                 <input
                   type="date"
-                  name="endDate"
-                  id="endDate"
+                  name="deadline"
+                  id="deadline"
                   className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                  value={formData.endDate}
+                  value={formData.deadline}
                   onChange={handleChange}
                 />
               </div>
             </div>
+            <div className="form-group">
+              <label
+                htmlFor="drive_name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Drive Name
+              </label>
+              <input
+                type="text"
+                name="drive_name"
+                id="drive_name"
+                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                value={formData.drive_name}
+                onChange={handleChange}
+                placeholder="Enter drive name"
+              />
+            </div>
+            <div className="form-group">
+              <label
+                htmlFor="number_of_positions"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Number of Positions
+              </label>
+              <input
+                type="number"
+                name="number_of_positions"
+                id="number_of_positions"
+                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                value={formData.number_of_positions}
+                onChange={handleChange}
+                placeholder="Enter number of positions"
+              />
+            </div>
           </div>
         </div>
-
-        {/* Logo section */}
         <div className="flex-shrink-0 flex items-center justify-center lg:justify-end">
           <div className="relative group">
             <div
