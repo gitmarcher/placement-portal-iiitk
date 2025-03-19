@@ -6,84 +6,58 @@ const User = require('../../models/studentModel');
 const StudentCred = require('../../models/studentCred');
 const Student  = require('../../models/studentModel');
 router.post('/create', protectCoordinatorAuth, async (req, res) => {
-    try {
-        const {
-            drive_name,
-            company_name,
-            company_logo,
-            about,
-            type_of_role,
-            location,
-            ctc,
-            duration,
-            number_of_positions,
-            deadline,
-            drive_date,
-            rounds, // Directly use this
-            criteria
-        } = req.body;
+  try {
+    const {
+      drive_name,
+      company_name,
+      company_logo,
+      about,
+      type_of_role,
+      location,
+      ctc,
+      duration,
+      number_of_positions,
+      deadline,
+      drive_date,
+      rounds,
+      criteria,
+      required_details, // Ensure this is included
+    } = req.body;
 
-        const newDrive = new Drive({
-            drive_name,
-            company_name,
-            company_logo,
-            about,
-            type_of_role,
-            location,
-            ctc,
-            duration,
-            number_of_positions,
-            deadline,
-            drive_date,
-            rounds, 
-            criteria,
-            coordinator: req.user.id // Assuming coordinator is authenticated and req.user contains the coordinator info
-        });
+    console.log("Received request body:", req.body);
 
-        await newDrive.save();
-        res.status(201).json({ message: 'Drive created successfully', drive: newDrive });
+    const newDrive = new Drive({
+      drive_name,
+      company_name,
+      company_logo,
+      about,
+      type_of_role,
+      location,
+      ctc,
+      duration,
+      number_of_positions,
+      deadline,
+      drive_date,
+      rounds,
+      criteria,
+      required_details, // Add this field
+      coordinator: req.user.id,
+    });
 
-    } catch (error) {
-        console.error('Error creating drive:', error.message);
-        res.status(500).json({ error: 'Failed to create drive' });
+    console.log("Saving new drive:", newDrive);
+    await newDrive.save();
+    console.log("Drive saved successfully:", newDrive);
+
+    res.status(201).json({ message: "Drive created successfully", drive: newDrive });
+  } catch (error) {
+    console.error("Error creating drive:", error);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        error: `A drive with the name "${req.body.drive_name}" already exists`,
+      });
     }
-});
-
-router.put('/update/:id', protectCoordinatorAuth, async (req, res) => {
-    try {
-        const driveId = req.params.id;
-
-        // Find the drive to ensure it belongs to the logged-in coordinator
-        const drive = await Drive.findOne({ _id: driveId, coordinator: req.user.id });
-        if (!drive) {
-            return res.status(404).json({ message: 'Drive not found or unauthorized' });
-        }
-
-        const updateData = {
-            drive_name: req.body.drive_name,
-            company_name: req.body.company_name,
-            company_logo: req.body.company_logo,
-            about: req.body.about,
-            type_of_role: req.body.type_of_role,
-            location: req.body.location,
-            ctc: req.body.ctc,
-            duration: req.body.duration,
-            number_of_positions: req.body.number_of_positions,
-            deadline: req.body.deadline,
-            drive_date: req.body.drive_date,
-            rounds: req.body.rounds, 
-            criteria: req.body.criteria
-        };
-
-        Object.keys(updateData).forEach(key => updateData[key] === undefined || updateData[key] === null && delete updateData[key]);
-
-        const updatedDrive = await Drive.findByIdAndUpdate(driveId, updateData, { new: true });
-
-        res.json({ message: 'Drive updated successfully', drive: updatedDrive });
-    } catch (error) {
-        console.error('Error updating drive:', error.message);
-        res.status(500).json({ error: 'Failed to update drive' });
-    }
+    res.status(500).json({ error: "Failed to create drive", details: error.message });
+  }
 });
 
 router.delete('/delete/:id', protectCoordinatorAuth, async (req, res) => {

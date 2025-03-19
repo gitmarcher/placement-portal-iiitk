@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { EditorState } from "draft-js";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import addDrive from "../API/addDrive";
 import DriveBasicDetails from "./DriveBasicDetails";
 import AboutWorkSection from "./AboutWorkSection";
 import EligibilitySection from "./EligibilitySection";
 import RoundsSection from "./RoundsSection";
 import RequiredDetailsSection from "./RequiredDetailsSection";
+import "react-toastify/dist/ReactToastify.css";
 
 const DriveDetails = () => {
-  // Initialize state with formData, including criteria.stream as an empty array
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [formData, setFormData] = useState({
     drive_name: "",
@@ -29,13 +29,12 @@ const DriveDetails = () => {
       graduation_degree: "",
       graduation_year: "",
       cgpa: "",
-      stream: [], // Ensures stream is an array for checkbox handling
+      stream: [],
       work_experience_count: ""
     },
     required_details: []
   });
 
-  // Handle text input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith("criteria.")) {
@@ -49,13 +48,12 @@ const DriveDetails = () => {
     }
   };
 
-  // Handle checkbox changes for streams
   const handleCheckboxChange = (name, value) => {
     setFormData((prevData) => {
       const currentValues = prevData.criteria[name] || [];
       const newValues = currentValues.includes(value)
-        ? currentValues.filter((v) => v !== value) // Remove if already selected
-        : [...currentValues, value]; // Add if not selected
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
       return {
         ...prevData,
         criteria: { ...prevData.criteria, [name]: newValues }
@@ -63,23 +61,20 @@ const DriveDetails = () => {
     });
   };
 
-  // Handle required details checkbox changes
   const handleRequiredDetailsChange = (value) => {
     setFormData((prev) => {
       const current = prev.required_details || [];
       const newValues = current.includes(value)
-        ? current.filter((v) => v !== value) // Remove if present
-        : [...current, value]; // Add if absent
+        ? current.filter((v) => v !== value)
+        : [...current, value];
       return { ...prev, required_details: newValues };
     });
   };
 
-  // Handle rounds updates
   const handleRoundChange = (rounds) => {
     setFormData((prevData) => ({ ...prevData, rounds }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -96,6 +91,7 @@ const DriveDetails = () => {
         formData.criteria.stream.length > 0
           ? formData.criteria.stream
           : ["ALL"];
+
       const payload = {
         drive_name: formData.drive_name,
         company_name: formData.company_name,
@@ -128,48 +124,57 @@ const DriveDetails = () => {
         },
         required_details: formData.required_details
       };
-      console.log("Submitting payload:", JSON.stringify(payload, null, 2));
+
+      console.log("Submitting payload:", payload);
       const res = await addDrive(payload);
+      console.log("Response from addDrive:", res);
       if (res.message === "Drive created successfully") {
         toast.success("Drive created successfully");
       } else {
         toast.error(res.error || "Error creating drive");
       }
     } catch (err) {
-      console.error("Error submitting form:", err.message);
-      toast.error(err.message || "Error creating drive");
+      console.error("Error submitting form:", err);
+      if (err.message.includes("duplicate key")) {
+        toast.error(
+          `A drive with the name "${formData.drive_name}" already exists. Please use a different name.`
+        );
+      } else {
+        toast.error(err.message || "Error creating drive");
+      }
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-[#FDE6E6] rounded-xl shadow-lg my-10 p-8 font-ubuntu">
-      <h1 className="text-3xl text-center font-bold text-gray-800 mb-8">
-        Create Drive
+    <div className="max-w-5xl mx-auto mt-12 mb-16 bg-white rounded-2xl shadow-xl p-8 font-sans transition-all duration-300 hover:shadow-2xl">
+      <ToastContainer position="top-center" autoClose={2000} hideProgressBar />
+      <h1 className="text-4xl font-extrabold text-center text-gray-900 mb-10 tracking-tight">
+        Create a New Drive
       </h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-10">
         <DriveBasicDetails formData={formData} handleChange={handleChange} />
-        <hr className="w-full mx-auto border-0 h-px my-6 bg-[#DDDDDD]" />
+        <hr className="border-t border-gray-200 my-8" />
         <AboutWorkSection
           editorState={editorState}
           setEditorState={setEditorState}
         />
-        <hr className="w-full mx-auto border-0 h-px my-6 bg-[#DDDDDD]" />
+        <hr className="border-t border-gray-200 my-8" />
         <EligibilitySection
           formData={formData}
           handleChange={handleChange}
-          handleCheckboxChange={handleCheckboxChange} // Pass handler for streams
+          handleCheckboxChange={handleCheckboxChange}
         />
-        <hr className="w-full mx-auto border-0 h-px my-6 bg-[#DDDDDD]" />
+        <hr className="border-t border-gray-200 my-8" />
         <RequiredDetailsSection
           formData={formData}
           handleCheckboxChange={handleRequiredDetailsChange}
         />
-        <hr className="w-full mx-auto border-0 h-px my-6 bg-[#DDDDDD]" />
+        <hr className="border-t border-gray-200 my-8" />
         <RoundsSection formData={formData} setRounds={handleRoundChange} />
-        <div className="flex items-center justify-center mt-12">
+        <div className="flex justify-center mt-12">
           <button
             type="submit"
-            className="bg-[#EB3030] text-white font-medium rounded-lg px-8 py-3 transition-colors duration-200 hover:bg-[#D00000] focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:ring-offset-2"
+            className="bg-gradient-to-r from-[#EB3030] to-[#D00000] text-white font-semibold text-lg rounded-xl px-10 py-4 shadow-md hover:from-[#D00000] hover:to-[#B00000] focus:outline-none focus:ring-4 focus:ring-[#EB3030]/50 transition-all duration-200 transform hover:scale-105"
           >
             Create Drive
           </button>
