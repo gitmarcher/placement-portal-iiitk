@@ -50,8 +50,10 @@ const StudentDrive = () => {
   const handleTabClick = (event) => setCurrentTab(event.currentTarget.id);
 
   const JobList = () => (
-    <div 
-      className={`${styles.scrollbarHide} h-[calc(100vh-64px)] overflow-y-auto ${
+    <div
+      className={`${
+        styles.scrollbarHide
+      } h-[calc(100vh-64px)] overflow-y-auto ${
         isMobile ? "w-full" : "w-[35%]"
       }`}
     >
@@ -91,9 +93,13 @@ const StudentDrive = () => {
   );
 
   const DetailSection = () => (
-    <div className={`${styles.scrollbarHide} h-[calc(100vh-64px)] overflow-y-auto ${
-      isMobile ? "w-full" : "w-[65%]"
-    }`}>
+    <div
+      className={`${
+        styles.scrollbarHide
+      } h-[calc(100vh-64px)] overflow-y-auto ${
+        isMobile ? "w-full" : "w-[65%]"
+      }`}
+    >
       <JobSummaryCard job={job} />
       {formDisplay ? (
         <StudentDriveForm

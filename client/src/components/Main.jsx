@@ -1,6 +1,6 @@
-import React from 'react';
-import Google from '../assets/Google.png';
-import { Link } from 'react-router-dom';
+import React from "react";
+import Google from "../assets/Google.png";
+import { Link } from "react-router-dom";
 import { CiLocationOn } from "react-icons/ci";
 import { SlCalender } from "react-icons/sl";
 import { BsCurrencyRupee } from "react-icons/bs";
@@ -90,8 +90,10 @@ const JobCard = ({ job }) => (
             <IoIosNotificationsOutline />
           </div>
           <div>
-            <Link to = "/drive/1" >
-            <button className='bg-black text-white p-1 px-3 rounded-md text-sm'>View Details</button>
+            <Link to="/drive/1">
+              <button className="bg-black text-white p-1 px-3 rounded-md text-sm">
+                View Details
+              </button>
             </Link>
           </div>
         </div>
