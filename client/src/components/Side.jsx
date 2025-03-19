@@ -1,11 +1,36 @@
 // src/components/Side.jsx
-import React from "react";
-import { useStudentDetails } from "../contexts/StudentDetailsContext"; // Import the custom hook
-import { Link } from "react-router-dom";
+import React, { useContext } from "react";
+import { useStudentDetails } from "../contexts/StudentDetailsContext";
+import { Link, useNavigate } from "react-router-dom";
+import { StudentCredContext } from "../contexts/StudentCredContext";
+import { toast } from "react-toastify";
+import { logout } from "../API/authentication"; // Import logout
 
 const Sidebar = ({ onToggleCalendar }) => {
-  const { studentData } = useStudentDetails(); // Corrected to studentData
-  const studentName = studentData.name || "Student"; // Fallback if name isn’t loaded yet
+  const { studentData } = useStudentDetails();
+  const studentName = studentData.name || "Student";
+  const { updateStudentCreds } = useContext(StudentCredContext);
+  const navigate = useNavigate();
+
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await logout();
+
+      if (response.success) {
+        // Clear student credentials
+        updateStudentCreds(null, null);
+        
+        toast.success(response.message || "Logged out successfully!");
+        navigate("/login"); // Redirect to login page
+      } else {
+        toast.error(response.message || "Logout failed");
+      }
+    } catch (error) {
+      toast.error("An error occurred during logout");
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <div className="w-80 bg-[#DDDDDD] p-4 rounded-lg">
@@ -35,7 +60,10 @@ const Sidebar = ({ onToggleCalendar }) => {
           >
             Calendar
           </li>
-          <li className="py-2 border-b border-black w-full text-center">
+          <li 
+            className="py-2 border-b border-black w-full text-center cursor-pointer" 
+            onClick={handleLogout}
+          >
             Log Out
           </li>
         </ul>

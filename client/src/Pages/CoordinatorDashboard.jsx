@@ -7,20 +7,51 @@ import Calendar from "../components/Calender";
 import SidebarWithCalendar from "../components/SidebarWithCalender";
 import { FaFilter, FaCalendarAlt } from "react-icons/fa";
 import { CalendarProvider } from "../components/CalenderContext";
+import { StudentCredContext } from "../contexts/StudentCredContext";
 
+import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import { useEffect,useContext } from "react";
 function CoordinatorDashboard() {
   // State management for toggling components
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const navigate = useNavigate();
+ 
+    const { studentCreds } = useContext(StudentCredContext);
+    const { creds, type, username } = studentCreds?.creds || {};
+    const userId = creds;
+    const userType = type;
   // Toggle functions
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const toggleFilter = () => setFilterOpen(!filterOpen);
   const toggleCalendar = () => setCalendarOpen(!calendarOpen);
   const handleSearch = (term) => setSearchTerm(term);
-
+ // Authentication check using useEffect
+  useEffect(() => {
+    console.log("CoordinatorDashboard - Checking authentication - studentCreds:", studentCreds);
+    if (!studentCreds || !studentCreds.creds || !studentCreds.creds.creds) {
+      console.log("No studentCreds found, redirecting to /login");
+      toast.error("You must be logged in to access the dashboard.");
+      navigate("/login", { replace: true });
+      console.log(userId)
+      return;
+    }
+    
+    if (!userId) {
+      console.log("No userId found, redirecting to /login");
+      toast.error("You must be logged in to access the dashboard.");
+      navigate("/login", { replace: true });
+    } else if (userType !== "coordinator") {
+      // console.log("User is not a student, redirecting to:", userType === "coordinator" ? "/coordinator/dashboard" : "/");
+      toast.error("Only coordinator can access this dashboard.");
+      navigate(userType === "coordinator" ? "/coordinator/dashboard" : "/", { replace: true });
+    } else {
+      console.log("User authenticated as coordinator, proceeding");
+    }
+  }, [studentCreds, userId, userType, navigate]);
   return (
     <CalendarProvider>
       <div className="App">

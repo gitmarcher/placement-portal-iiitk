@@ -12,7 +12,9 @@ import { BsDownload } from "react-icons/bs";
 import { job, details, studentInfo, experienceArray } from "../../data";
 import data from "../../data";
 import styles from "./StudentDrive.module.css";
-
+import { StudentCredContext } from "../contexts/StudentCredContext";
+import { useContext } from "react";
+import { toast, ToastContainer } from "react-toastify";
 const StudentDrive = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,7 +23,36 @@ const StudentDrive = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [currentTab, setCurrentTab] = useState("experiences");
   const [display, setDisplay] = useState("1");
-
+  const { studentCreds } = useContext(StudentCredContext);
+  // Handle possible null or undefined studentCreds
+    const { creds, type, username } = studentCreds?.creds || {};
+    const userId = creds;
+    const userType = type;
+    
+  console.log("CoordinatorDashboard - studentCreds:", userId, userType, username);
+   useEffect(() => {
+      console.log("CoordinatorDashboard - Checking authentication - studentCreds:", studentCreds);
+      if (!studentCreds || !studentCreds.creds || !studentCreds.creds.creds) {
+        console.log("No studentCreds found, redirecting to /login");
+        toast.error("You must be logged in to access the dashboard.");
+        navigate("/login", { replace: true });
+        console.log(userId)
+        return;
+      }
+      
+      if (!userId) {
+        console.log("No userId found, redirecting to /login");
+        toast.error("You must be logged in to access the dashboard.");
+        navigate("/login", { replace: true });
+      } else if (userType !== "coordinator") {
+        // console.log("User is not a student, redirecting to:", userType === "coordinator" ? "/coordinator/dashboard" : "/");
+        toast.error("Only coordinator can access this dashboard.");
+        navigate(userType === "coordinator" ? "/coordinator/dashboard" : "/", { replace: true });
+      } else {
+        console.log("User authenticated as coordinator, proceeding");
+      }
+    }, [studentCreds, userId, userType, navigate]);
+    
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;

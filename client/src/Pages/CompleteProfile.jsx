@@ -1,5 +1,5 @@
 // src/components/CompleteProfile.js
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import FormStep1 from "../components/FormStep1";
 import FormStep2 from "../components/FormStep2";
@@ -11,11 +11,10 @@ import { StudentCredContext } from "../contexts/StudentCredContext";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
+// CompleteProfile component manages multi-step profile completion for students
 const CompleteProfile = () => {
-  const [step, setStep] = useState(1);
-  const { studentCreds } = useContext(StudentCredContext);
-  const { creds: userId } = studentCreds; // userId is the creds value
-  const navigate = useNavigate();
+  // State management
+  const [step, setStep] = useState(1); // Tracks current form step
   const [formData, setFormData] = useState({
     roll_no: "",
     name: "",
@@ -50,11 +49,30 @@ const CompleteProfile = () => {
     }
   });
 
+  // Hooks and context
+  const { studentCreds } = useContext(StudentCredContext);
+  const { creds: userId, type: userType, username } = studentCreds || {};
+  
+
+  const navigate = useNavigate();
+  console.log("CompleteProfile - studentCreds:", userId, userType, username);
+  // Authentication and role validation on component mount
+  useEffect(() => {
+    if (!userId) {
+      toast.error("You must be logged in to complete your profile.");
+      navigate("/login", { replace: true });
+    } else if (userId.type !== "student") {
+      toast.error("Only students can complete this profile.");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [userId.creds, userId.userType, navigate]);
+
+  // Step navigation functions
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
+  // Form validation function
   const validateForm = () => {
-    // Check top-level fields
     const topLevelFields = [
       { key: "roll_no", label: "Roll Number" },
       { key: "name", label: "Name" },
@@ -70,12 +88,12 @@ const CompleteProfile = () => {
       { key: "github_profile", label: "GitHub Profile" }
     ];
 
+    // Validate top-level fields
     for (const field of topLevelFields) {
       if (field.isArray) {
-        const value =
-          field.key === "phone_no"
-            ? formData[field.key]
-            : formData[field.key].split(",").map((item) => item.trim());
+        const value = field.key === "phone_no"
+          ? formData[field.key]
+          : formData[field.key].split(",").map((item) => item.trim());
         if (!value.length || value.every((item) => item === "")) {
           toast.error(`${field.label} cannot be empty.`);
           return false;
@@ -86,7 +104,7 @@ const CompleteProfile = () => {
       }
     }
 
-    // Check address fields
+    // Validate address fields
     const addressFields = [
       { key: "street", label: "Street" },
       { key: "city", label: "City" },
@@ -102,7 +120,7 @@ const CompleteProfile = () => {
       }
     }
 
-    // Check academics fields
+    // Validate academic fields
     const academicsFields = [
       { key: "cgpa", label: "CGPA" },
       { key: "tenth_board_name", label: "10th Board Name" },
@@ -132,19 +150,19 @@ const CompleteProfile = () => {
     return true;
   };
 
+  // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form before submission
     if (!validateForm()) {
-      return; // Stop submission if validation fails
+      return;
     }
 
     try {
-      // Transform string fields into arrays by splitting at commas
+      // Transform data for API submission
       const transformedData = {
         ...formData,
-        creds: userId, // Add creds from StudentCredContext
+        creds: userId,
         work_experience: formData.work_experience
           ? formData.work_experience.split(",").map((item) => item.trim())
           : [],
@@ -152,12 +170,12 @@ const CompleteProfile = () => {
           ? formData.additional_skills.split(",").map((item) => item.trim())
           : []
       };
-      // Make API call to the backend with transformed data
+      
       const response = await completeProfile(transformedData);
       console.log("Form submitted:", transformedData);
 
+      // Handle API response
       if (response.success) {
-        // Redirect to dashboard
         navigate("/dashboard");
         toast.success("Profile completed successfully!");
         console.log("Profile completed successfully!");
@@ -180,16 +198,26 @@ const CompleteProfile = () => {
         backgroundRepeat: "no-repeat"
       }}
     >
+      {/* Toast notifications container */}
       <ToastContainer />
+      
+      {/* Navigation bar */}
       <Navbar />
+      
+      {/* Main content */}
       <div className="flex-grow flex items-center justify-center relative">
+        {/* Background overlay effects */}
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="absolute inset-0 backdrop-blur-lg"></div>
+        
+        {/* Form container */}
         <div className="relative z-10 w-full max-w-lg mt-6 p-6 bg-white rounded-lg shadow-lg flex flex-col">
+          {/* Back button */}
           <button className="absolute top-4 left-4 text-black p-2 rounded-full focus:outline-none focus:shadow-outline">
             <IoIosArrowRoundBack className="h-12 w-12" />
           </button>
 
+          {/* Multi-step form */}
           <form onSubmit={handleSubmit} className="flex-grow">
             {step === 1 && (
               <FormStep1 formData={formData} setFormData={setFormData} />
@@ -201,6 +229,7 @@ const CompleteProfile = () => {
               <FormStep3 formData={formData} setFormData={setFormData} />
             )}
 
+            {/* Navigation buttons */}
             <div className="flex justify-between mt-[2rem]">
               {step > 1 && (
                 <button
@@ -222,6 +251,7 @@ const CompleteProfile = () => {
               )}
             </div>
 
+            {/* Submit button (final step) */}
             {step === 3 && (
               <div className="flex justify-center mt-4">
                 <button
