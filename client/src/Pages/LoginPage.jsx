@@ -8,16 +8,15 @@ import { toast } from "react-toastify";
 import { StudentCredContext } from "../contexts/StudentCredContext";
 
 const LoginPage = () => {
-  const [userType, setUserType] = useState("student"); // Default to student login
+  const [userType, setUserType] = useState("student");
   const [formData, setFormData] = useState({
-    username: "", // Note: This will be sent as 'username' to the backend
+    username: "",
     password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { updateStudentCreds } = useContext(StudentCredContext);
 
-  // Handle input changes
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData((prevData) => ({
@@ -36,31 +35,28 @@ const LoginPage = () => {
         formData.password,
         userType
       );
-
       console.log(response);
 
       if (response.login) {
-        // Login successful
         if (userType === "student") {
-          // Store student credentials in context
           updateStudentCreds(response.userId, response.username);
           console.log(response.userId);
           console.log(response.username);
         }
-        // Check if profile is complete
         if (!response.profileComplete) {
-          // Profile is incomplete, show message and redirect to profile completion
           toast.info(response.message);
           const completionRoute =
-            userType === "student" ? "/complete-profile" : "/";
-          navigate(completionRoute);
+            userType === "student"
+              ? "/complete-profile"
+              : "/coordinator/complete-profile";
+          navigate(completionRoute, { replace: true });
         } else {
-          // Profile is complete, proceed to dashboard
           toast.success(response.message || "Login successful!");
-          navigate("/dashboard");
+          const dashboardRoute =
+            userType === "student" ? "/dashboard" : "/coordinator/dashboard";
+          navigate(dashboardRoute, { replace: true });
         }
       } else {
-        // Login failed
         toast.error(response.message || "Authentication failed");
       }
     } catch (error) {
@@ -73,13 +69,10 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-white overflow-hidden">
-      {/* Sticky Navbar */}
       <div className="hidden md:block fixed top-0 left-0 right-0 z-50">
         <Navbar />
       </div>
-
       <div className="flex flex-col md:flex-row h-screen">
-        {/* Left Side (Form) */}
         <div className="w-full mt-9 md:w-1/2 flex flex-col justify-center items-center p-8">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-semibold text-center mb-2 text-gray-800">
@@ -88,8 +81,6 @@ const LoginPage = () => {
             <p className="text-center text-gray-500 mb-6">
               Select your account type
             </p>
-
-            {/* User Type Selector */}
             <div className="flex rounded-md overflow-hidden mb-6 border border-gray-200 shadow-sm">
               <button
                 type="button"
@@ -114,7 +105,6 @@ const LoginPage = () => {
                 Coordinator
               </button>
             </div>
-
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label
@@ -137,7 +127,6 @@ const LoginPage = () => {
                   required
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="password"
@@ -155,7 +144,6 @@ const LoginPage = () => {
                   required
                 />
               </div>
-
               <button
                 type="submit"
                 className="w-full bg-red-500 text-white py-2.5 rounded-md font-medium hover:bg-red-400 transition-all duration-200 shadow-sm disabled:bg-red-300 disabled:cursor-not-allowed"
@@ -166,8 +154,6 @@ const LoginPage = () => {
             </form>
           </div>
         </div>
-
-        {/* Right Side (Image) */}
         <div className="hidden md:block md:w-1/2 bg-gray-50">
           <div className="h-full flex items-center justify-center p-8">
             <img

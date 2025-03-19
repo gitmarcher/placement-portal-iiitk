@@ -21,7 +21,11 @@ const CoordinatorJobCard = ({ job }) => (
           <div className="text-sm sm:text-base">{job.position}</div>
         </div>
         <div className="w-12 sm:w-16">
-          <img src={job.logo} alt={job.company} className="w-full h-auto" />
+          <img
+            src={job.company_logo}
+            alt={job.company}
+            className="w-full h-auto"
+          />
         </div>
       </div>
       <div className="font-semibold flex flex-wrap gap-2 sm:gap-4">

@@ -4,23 +4,37 @@ import Navbar from "../components/Navbar";
 import JobListCard from "../components/JobListCard/JobListCard";
 import JobSummaryCard from "../components/JobSummaryCard";
 import JobDetails from "../components/JobDetails";
-import StudentDriveForm from "../components/StudentDriveForm";
 import ExperienceSection from "../components/ExperienceSection";
 import Results from "../components/Results";
 import { IoChevronBackOutline } from "react-icons/io5";
 import { BsDownload } from "react-icons/bs";
-import { job, details, studentInfo, experienceArray } from "../../data";
-import data from "../../data";
+import { fetchDrives } from "../API/getDrives"; // Adjust path as needed
 import styles from "./StudentDrive.module.css";
 
-const StudentDrive = () => {
+const CoordinatorDrive = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [selectedCard, setSelectedCard] = useState(id ? parseInt(id) : 1);
-  const [formDisplay, setFormDisplay] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(id);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [currentTab, setCurrentTab] = useState("experiences");
   const [display, setDisplay] = useState("1");
+  const [drives, setDrives] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadDrives = async () => {
+      try {
+        const data = await fetchDrives(1, 100);
+        console.log("Fetched drives:", data.drives); // Debug log to inspect data
+        setDrives(data.drives || []);
+      } catch (error) {
+        console.error("Error fetching drives:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDrives();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,21 +47,22 @@ const StudentDrive = () => {
       }
     };
     window.addEventListener("resize", handleResize);
-    handleResize(); // Call once to set initial state
+    handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, [display]);
 
-  const handleCardClick = (id) => {
-    setSelectedCard(id);
-    navigate(`/coordinator/drive/${id}`);
+  const handleCardClick = (driveId) => {
+    setSelectedCard(driveId);
+    navigate(`/coordinator/drive/${driveId}`);
     if (isMobile) {
       setDisplay("2");
     }
   };
 
-  const toggleFormDisplay = () => setFormDisplay(!formDisplay);
-
   const handleTabClick = (event) => setCurrentTab(event.currentTarget.id);
+
+  const selectedDrive =
+    drives.find((drive) => drive._id === selectedCard) || {};
 
   const JobList = () => (
     <div
@@ -57,17 +72,37 @@ const StudentDrive = () => {
         isMobile ? "w-full" : "w-[35%]"
       }`}
     >
-      {data.map((job) => (
-        <div
-          key={job.id}
-          className={`cursor-pointer ${
-            selectedCard === job.id ? "bg-coral-red/20" : "bg-white"
-          }`}
-          onClick={() => handleCardClick(job.id)}
-        >
-          <JobListCard job={job} id={selectedCard} />
-        </div>
-      ))}
+      {loading ? (
+        <div>Loading drives...</div>
+      ) : drives.length === 0 ? (
+        <div>No drives available</div>
+      ) : (
+        drives.map((drive) => (
+          <div
+            key={drive._id}
+            className={`cursor-pointer ${
+              selectedCard === drive._id ? "bg-coral-red/20" : "bg-white"
+            }`}
+            onClick={() => handleCardClick(drive._id)}
+          >
+            <JobListCard
+              job={{
+                id: drive._id,
+                company: drive.company_name || "Unknown Company",
+                position: drive.drive_name || "Unknown Position",
+                location: Array.isArray(drive.location)
+                  ? drive.location.join(", ")
+                  : "Not specified",
+                type: drive.type_of_role || "Unknown",
+                deadline: drive.deadline
+                  ? new Date(drive.deadline).toLocaleString()
+                  : "Not specified",
+                company_logo: drive.company_logo // Use company_logo with fallback
+              }}
+            />
+          </div>
+        ))
+      )}
     </div>
   );
 
@@ -100,40 +135,60 @@ const StudentDrive = () => {
         isMobile ? "w-full" : "w-[65%]"
       }`}
     >
-      <JobSummaryCard job={job} />
-      {formDisplay ? (
-        <StudentDriveForm
-          details={studentInfo}
-          handleFormClick={toggleFormDisplay}
-        />
+      {loading ? (
+        <div>Loading drive details...</div>
+      ) : !selectedDrive._id ? (
+        <div>Please select a drive</div>
       ) : (
-        <JobDetails details={details} studentInfo={studentInfo} />
-      )}
-      <div className="flex w-full justify-center mt-4">
-        <div className="flex flex-col gap-5 w-full">
-          <div className="flex justify-end">
-            <div className="flex mr-[3rem] rounded-md px-3 py-1 items-center">
-              <BsDownload className="text-custom-red" />
-              &ensp; <h3 className="text-custom-red"> Download results</h3>
+        <>
+          <JobSummaryCard
+            job={{
+              id: selectedDrive._id,
+              company: selectedDrive.company_name || "Unknown Company",
+              position: selectedDrive.drive_name || "Unknown Position",
+              location: Array.isArray(selectedDrive.location)
+                ? selectedDrive.location.join(", ")
+                : "Not specified",
+              type: selectedDrive.type_of_role || "Unknown",
+              duration: selectedDrive.duration || "Not specified",
+              salary: selectedDrive.ctc || "Not specified",
+              deadline: selectedDrive.deadline
+                ? new Date(selectedDrive.deadline).toLocaleString()
+                : "Not specified",
+              logo: selectedDrive.company_logo || DEFAULT_LOGO // Use logo with fallback
+            }}
+          />
+          <JobDetails details={selectedDrive} studentInfo={null} />
+          <div className="flex w-full justify-center mt-4">
+            <div className="flex flex-col gap-5 w-full">
+              <div className="flex justify-end">
+                <div className="flex mr-[3rem] rounded-md px-3 py-1 items-center cursor-pointer">
+                  <BsDownload className="text-custom-red" /> {" "}
+                  <h3 className="text-custom-red">Download results</h3>
+                </div>
+              </div>
+              <div className="flex gap-20 justify-center">
+                <Link to={`/coordinator/edit-drive/${selectedDrive._id}`}>
+                  <button className="button-31 pt-4" role="button">
+                    Edit Drive
+                  </button>
+                </Link>
+                <button className="button-31 pt-4" role="button">
+                  End Drive
+                </button>
+              </div>
             </div>
           </div>
-          <div className="flex gap-20 justify-center">
-            <Link to={"/coordinator/add-drive"}>
-              <button className="button-31 pt-4" role="button">
-                Edit Drive
-              </button>
-            </Link>
-            <button className="button-31 pt-4" role="button">
-              End Drive
-            </button>
-          </div>
-        </div>
-      </div>
-      <TabSection />
-      {currentTab === "experiences" ? (
-        <ExperienceSection user="coordinator" arrayExp={experienceArray} />
-      ) : (
-        <Results />
+          <TabSection />
+          {currentTab === "experiences" ? (
+            <ExperienceSection
+              user="coordinator"
+              arrayExp={selectedDrive.rounds || []}
+            />
+          ) : (
+            <Results driveId={selectedDrive._id} />
+          )}
+        </>
       )}
     </div>
   );
@@ -179,4 +234,4 @@ const StudentDrive = () => {
   );
 };
 
-export default StudentDrive;
+export default CoordinatorDrive;

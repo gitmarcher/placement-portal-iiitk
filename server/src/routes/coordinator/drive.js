@@ -142,6 +142,29 @@ router.put('/update-selected/:driveId/:roundNumber', protectCoordinatorAuth, asy
     }
 });
 
+router.get('/all', protectCoordinatorAuth, async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1; // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+        const skip = (page - 1) * limit;
+
+        const totalDrives = await Drive.countDocuments();
+        const drives = await Drive.find({})
+            .skip(skip)
+            .limit(limit);
+
+        res.json({
+            drives,
+            currentPage: page,
+            totalPages: Math.ceil(totalDrives / limit),
+            totalDrives
+        });
+    } catch (error) {
+        console.error('Error fetching drives:', error);
+        res.status(500).send('Server error');
+    }
+});
+
 router.delete('/update-selected/:driveId/:roundNumber', protectCoordinatorAuth, async (req, res) => {
     try {
         const { driveId, roundNumber } = req.params;
