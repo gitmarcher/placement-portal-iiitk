@@ -26,13 +26,13 @@ const RoundsSection = ({ formData, setRounds }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h2 className="text-lg font-medium text-coral-red mb-3">Rounds</h2>
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-lg font-medium text-[#EB3030] mb-3">Rounds</h2>
       <div className="space-y-3">
         {rounds.map((round, index) => (
           <div
             key={index}
-            className="flex flex-col md:flex-row gap-2 bg-tertiary rounded-md p-2"
+            className="flex flex-col md:flex-row gap-2 bg-[#FDE6E6] rounded-md p-2"
           >
             <input
               name="round_number"
@@ -41,14 +41,14 @@ const RoundsSection = ({ formData, setRounds }) => {
                 updateRound(index, "round_number", e.target.value)
               }
               placeholder="No."
-              className="w-full md:w-20 p-2 border border-slate-gray rounded-md focus:outline-none focus:ring-1 focus:ring-coral-red bg-white text-gray-700 placeholder-slate-gray text-sm"
+              className="w-full md:w-20 p-2 border border-[#DDDDDD] rounded-md focus:outline-none focus:ring-2 focus:ring-[#EB3030] bg-white text-gray-700 placeholder-[#DDDDDD] text-sm"
             />
             <input
               name="round_name"
               value={round.round_name || ""}
               onChange={(e) => updateRound(index, "round_name", e.target.value)}
               placeholder="Name"
-              className="w-full md:w-40 p-2 border border-slate-gray rounded-md focus:outline-none focus:ring-1 focus:ring-coral-red bg-white text-gray-700 placeholder-slate-gray text-sm"
+              className="w-full md:w-40 p-2 border border-[#DDDDDD] rounded-md focus:outline-none focus:ring-2 focus:ring-[#EB3030] bg-white text-gray-700 placeholder-[#DDDDDD] text-sm"
             />
             <input
               name="description"
@@ -57,7 +57,7 @@ const RoundsSection = ({ formData, setRounds }) => {
                 updateRound(index, "description", e.target.value)
               }
               placeholder="Description"
-              className="w-full p-2 border border-slate-gray rounded-md focus:outline-none focus:ring-1 focus:ring-coral-red bg-white text-gray-700 placeholder-slate-gray text-sm"
+              className="w-full p-2 border border-[#DDDDDD] rounded-md focus:outline-none focus:ring-2 focus:ring-[#EB3030] bg-white text-gray-700 placeholder-[#DDDDDD] text-sm"
             />
           </div>
         ))}
@@ -65,7 +65,7 @@ const RoundsSection = ({ formData, setRounds }) => {
       <button
         type="button"
         onClick={addRound}
-        className="mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-coral-red text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-coral-red transition-colors duration-200"
+        className="mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#EB3030] text-white text-sm font-medium rounded-md hover:bg-[#D00000] focus:outline-none focus:ring-2 focus:ring-[#EB3030] transition-colors duration-200"
       >
         <FaPlus className="w-3 h-3" />
         Add Round

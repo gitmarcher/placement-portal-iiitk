@@ -28,31 +28,65 @@ const criteria = new mongoose.Schema({
 	work_experience_count: { type: Number, required: false, min: 0, default: 0 },
 });
 
-const drive = new mongoose.Schema({
-	drive_name: { type: String, required: true, unique: true },
-	company_name: { type: String, required: true },
-	company_logo: { type: mongoose.SchemaTypes.String, required: false }, // URL to company logo
-	about: { type: String, required: false },
-	type_of_role: {
-		type: String,
-		required: true,
-		enum: ["Internship", "Full-time", "Internship + PPO", "PPO"],
-	},
-	location: { type: [String], required: true },
-	ctc: { type: String, required: true, min: 0 },
-	duration: { type: String, required: true }, // e.g., "6 months", "Full-time"
-	number_of_positions: { type: Number, required: true, min: 1 },
-	deadline: { type: Date, required: true },
-	drive_date: { type: Date, required: true },
-	rounds: { type: [round], required: true },
-	criteria: { type: criteria, required: true },
-	coordinator: {
-		type: mongoose.Schema.Types.ObjectId,
-		ref: 'Coordinator', // Reference to the Coordinator model
-		required: true
-	}
+ 
 
+const drive = new mongoose.Schema({
+  drive_name: { type: String, required: true },
+  company_name: { type: String, required: true },
+  company_logo: { type: String },
+  about: { type: String },
+  type_of_role: { type: String },
+  location: { type: [String] },
+  ctc: { type: String },
+  duration: { type: String },
+  number_of_positions: { type: Number },
+  deadline: { type: Date },
+  drive_date: { type: Date },
+  rounds: [
+    {
+      round_number: { type: Number },
+      round_name: { type: String },
+      description: { type: String },
+    },
+  ],
+  criteria: {
+    tenth_percentage: { type: Number },
+    twelfth_percentage: { type: Number },
+    graduation_degree: { type: String },
+    graduation_year: { type: [Number] },
+    cgpa: { type: Number },
+    stream: { type: [String] },
+    work_experience_count: { type: Number },
+  },
+  required_details: {
+    type: [String],
+    required: true,
+    enum: [
+      "name",
+      "gender",
+      "roll",
+      "email",
+      "personalEmail",
+      "cgpa",
+      "backlogs",
+      "phone",
+      "resume",
+      "batch",
+      "branch",
+      "dob",
+      "12th",
+      "10th",
+      "address",
+      "skills",
+      "work",
+      "github",
+      "linkedin",
+      "location",
+    ],
+  },
 });
+
+// module.exports = mongoose.model("Drive", driveSchema);
 
 // On Delete Cascade when a drive is deleted remove the drive reference from all students' applied_drives
 drive.pre('remove', async function (next) {

@@ -12,9 +12,9 @@ const AboutWorkSection = ({ editorState, setEditorState }) => {
         <Editor
           editorState={editorState}
           onEditorStateChange={setEditorState}
-          wrapperClassName="border border-gray-300 rounded-lg overflow-hidden"
+          wrapperClassName="border border-[#DDDDDD] rounded-lg overflow-hidden"
           editorClassName="px-4"
-          toolbarClassName="border-0 border-b border-gray-300 bg-gray-50"
+          toolbarClassName="border-0 border-b border-[#DDDDDD] bg-[#FDE6E6]"
           toolbar={{
             options: [
               "inline",

@@ -5,18 +5,12 @@ const EligibilitySection = ({
   handleChange,
   handleCheckboxChange
 }) => {
-  const yearSemesterOptions = [
-    { value: "1st", label: "1st year (SEM I-II)" },
-    { value: "2nd", label: "2nd year (SEM III-IV)" },
-    { value: "3rd", label: "3rd year (SEM V-VI)" },
-    { value: "4th", label: "4th year (SEM VII-VIII)" }
-  ];
-
   const streamOptions = [
+    { value: "ALL", label: "ALL" },
     { value: "CSE", label: "CSE" },
-    { value: "CSY", label: "CSY" },
+    { value: "ECE", label: "ECE" },
     { value: "AIDS", label: "AI-DS" },
-    { value: "ECE", label: "ECE" }
+    { value: "CSY", label: "CSY" }
   ];
 
   const CheckBox = ({ label, name, options }) => {
@@ -36,7 +30,7 @@ const EligibilitySection = ({
                 id={`${name}-${index}`}
                 name={name}
                 value={option.value}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-0 focus:ring-offset-0 border-gray-300 cursor-pointer"
+                className="w-5 h-5 text-[#EB3030] rounded focus:ring-0 focus:ring-offset-0 border-[#DDDDDD] cursor-pointer"
                 checked={values.includes(option.value)}
                 onChange={() => handleCheckboxChange(name, option.value)}
               />
@@ -59,49 +53,25 @@ const EligibilitySection = ({
         Eligibility
       </h2>
       <div className="space-y-6">
-        <CheckBox
-          label="Year/Semester"
-          name="yearSemester"
-          options={yearSemesterOptions}
-        />
         <CheckBox label="Stream" name="stream" options={streamOptions} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
-              htmlFor="criteria.minimumCGPA"
+              htmlFor="criteria.cgpa"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Minimum CGPA
             </label>
             <input
               type="text"
-              name="criteria.minimumCGPA"
-              id="criteria.minimumCGPA"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.criteria.minimumCGPA || ""}
+              name="criteria.cgpa"
+              id="criteria.cgpa"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+              value={formData.criteria.cgpa || ""}
               onChange={handleChange}
               placeholder="e.g., 7.5"
             />
           </div>
-          <div className="form-group">
-            <label
-              htmlFor="criteria.backlogs"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Backlogs
-            </label>
-            <input
-              type="text"
-              name="criteria.backlogs"
-              id="criteria.backlogs"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-              value={formData.criteria.backlogs || ""}
-              onChange={handleChange}
-              placeholder="e.g., 0"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
               htmlFor="criteria.tenth_percentage"
@@ -113,12 +83,14 @@ const EligibilitySection = ({
               type="text"
               name="criteria.tenth_percentage"
               id="criteria.tenth_percentage"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
               value={formData.criteria.tenth_percentage || ""}
               onChange={handleChange}
-              placeholder="e.g., 85%"
+              placeholder="e.g., 85"
             />
           </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
               htmlFor="criteria.twelfth_percentage"
@@ -130,14 +102,12 @@ const EligibilitySection = ({
               type="text"
               name="criteria.twelfth_percentage"
               id="criteria.twelfth_percentage"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
               value={formData.criteria.twelfth_percentage || ""}
               onChange={handleChange}
-              placeholder="e.g., 80%"
+              placeholder="e.g., 80"
             />
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
               htmlFor="criteria.graduation_degree"
@@ -149,46 +119,48 @@ const EligibilitySection = ({
               type="text"
               name="criteria.graduation_degree"
               id="criteria.graduation_degree"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
               value={formData.criteria.graduation_degree || ""}
               onChange={handleChange}
               placeholder="e.g., B.Tech"
             />
           </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="form-group">
             <label
               htmlFor="criteria.graduation_year"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Graduation Year
+              Graduation Year(s)
             </label>
             <input
               type="text"
               name="criteria.graduation_year"
               id="criteria.graduation_year"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
               value={formData.criteria.graduation_year || ""}
               onChange={handleChange}
-              placeholder="e.g., 2025"
+              placeholder="e.g., 2023, 2024"
             />
           </div>
-        </div>
-        <div className="form-group">
-          <label
-            htmlFor="criteria.work_experience_count"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Years of Experience
-          </label>
-          <input
-            type="text"
-            name="criteria.work_experience_count"
-            id="criteria.work_experience_count"
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-0 focus:outline-none focus:border-blue-500 transition"
-            value={formData.criteria.work_experience_count || ""}
-            onChange={handleChange}
-            placeholder="e.g., 0 (for freshers)"
-          />
+          <div className="form-group">
+            <label
+              htmlFor="criteria.work_experience_count"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Years of Experience
+            </label>
+            <input
+              type="text"
+              name="criteria.work_experience_count"
+              id="criteria.work_experience_count"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+              value={formData.criteria.work_experience_count || ""}
+              onChange={handleChange}
+              placeholder="e.g., 0"
+            />
+          </div>
         </div>
       </div>
     </section>

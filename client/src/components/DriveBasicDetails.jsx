@@ -20,7 +20,7 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 type="text"
                 name="company_name"
                 id="company_name"
-                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
                 value={formData.company_name}
                 onChange={handleChange}
                 placeholder="Enter company name"
@@ -31,16 +31,71 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 htmlFor="type_of_role"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Roles
+                Type of Role
+              </label>
+              <select
+                name="type_of_role"
+                id="type_of_role"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                value={formData.type_of_role}
+                onChange={handleChange}
+              >
+                <option value="">Select role type</option>
+                <option value="Internship">Internship</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Internship + PPO">Internship + PPO</option>
+                <option value="PPO">PPO</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label
+                htmlFor="location"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Location(s)
               </label>
               <input
                 type="text"
-                name="type_of_role"
-                id="type_of_role"
-                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                value={formData.type_of_role}
+                name="location"
+                id="location"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                value={formData.location}
                 onChange={handleChange}
-                placeholder="Enter roles (e.g., Software Engineer, Product Manager)"
+                placeholder="Enter locations, comma-separated (e.g., Mumbai, Pune)"
+              />
+            </div>
+            <div className="form-group">
+              <label
+                htmlFor="ctc"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                CTC
+              </label>
+              <input
+                type="text"
+                name="ctc"
+                id="ctc"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                value={formData.ctc}
+                onChange={handleChange}
+                placeholder="e.g., 5 LPA"
+              />
+            </div>
+            <div className="form-group">
+              <label
+                htmlFor="duration"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Duration
+              </label>
+              <input
+                type="text"
+                name="duration"
+                id="duration"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                value={formData.duration}
+                onChange={handleChange}
+                placeholder="e.g., 6 months, Full-time"
               />
             </div>
             <div className="form-group">
@@ -54,7 +109,7 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 type="text"
                 name="company_logo"
                 id="company_logo"
-                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
                 value={formData.company_logo}
                 onChange={handleChange}
                 placeholder="https://example.com/logo.png"
@@ -72,7 +127,7 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                   type="date"
                   name="drive_date"
                   id="drive_date"
-                  className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
                   value={formData.drive_date}
                   onChange={handleChange}
                 />
@@ -88,7 +143,7 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                   type="date"
                   name="deadline"
                   id="deadline"
-                  className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
                   value={formData.deadline}
                   onChange={handleChange}
                 />
@@ -105,7 +160,7 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 type="text"
                 name="drive_name"
                 id="drive_name"
-                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
                 value={formData.drive_name}
                 onChange={handleChange}
                 placeholder="Enter drive name"
@@ -122,10 +177,11 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 type="number"
                 name="number_of_positions"
                 id="number_of_positions"
-                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
                 value={formData.number_of_positions}
                 onChange={handleChange}
                 placeholder="Enter number of positions"
+                min="1"
               />
             </div>
           </div>
@@ -136,7 +192,7 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
               className={`w-32 h-32 rounded-full overflow-hidden shadow-md flex items-center justify-center ${
                 formData.company_logo
                   ? ""
-                  : "bg-gray-100 border-2 border-dashed border-gray-300"
+                  : "bg-[#FDE6E6] border-2 border-dashed border-[#DDDDDD]"
               }`}
             >
               {formData.company_logo ? (
@@ -147,7 +203,7 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 />
               ) : (
                 <div className="text-center p-2">
-                  <span className="text-gray-500 text-sm">Company Logo</span>
+                  <span className="text-[#DDDDDD] text-sm">Company Logo</span>
                 </div>
               )}
             </div>
