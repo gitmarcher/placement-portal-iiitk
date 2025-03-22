@@ -1,22 +1,28 @@
+// src/Pages/LoginPage.js
 import React, { useState, useContext } from "react";
 import Navbar from "../components/Navbar";
 import { login_img } from "../assets";
 import { login } from "../API/authentication";
 import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify"; // Added ToastContainer import
 import { StudentCredContext } from "../contexts/StudentCredContext";
 
+// LoginPage component handles user authentication
 const LoginPage = () => {
+  // State management
   const [userType, setUserType] = useState("student");
   const [formData, setFormData] = useState({
     username: "",
     password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Hooks
   const navigate = useNavigate();
   const { updateStudentCreds } = useContext(StudentCredContext);
 
+  // Handle form input changes
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData((prevData) => ({
@@ -25,54 +31,98 @@ const LoginPage = () => {
     }));
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Basic form validation before submission
+    if (!formData.username || !formData.password) {
+      toast.warn("Please fill in all fields.");
+      return;
+    }
+
     setIsLoading(true);
+    toast.info("Attempting to log in...", { autoClose: 2000 });
 
     try {
+      // Attempt login with provided credentials
       const response = await login(
         formData.username,
         formData.password,
         userType
       );
-      console.log(response);
+
+      console.log("res:", response);
 
       if (response.login) {
+        // Store user credentials in context
+        updateStudentCreds({
+          creds: response.userId,
+          username: response.username,
+          type: userType
+        });
+
+        console.log("Stored credentials:", {
+          creds: response.userId,
+          username: response.username,
+          type: userType
+        });
+
+        // Route navigation based on user type and profile completion
         if (userType === "student") {
-          updateStudentCreds(response.userId, response.username);
-          console.log(response.userId);
-          console.log(response.username);
-        }
-        if (!response.profileComplete) {
-          toast.info(response.message);
-          const completionRoute =
-            userType === "student"
-              ? "/complete-profile"
-              : "/coordinator/complete-profile";
-          navigate(completionRoute, { replace: true });
-        } else {
-          toast.success(response.message || "Login successful!");
-          const dashboardRoute =
-            userType === "student" ? "/dashboard" : "/coordinator/dashboard";
-          navigate(dashboardRoute, { replace: true });
+          console.log("pf:", response.profileComplete);
+          if (!response.profileComplete) {
+            console.log("hello");
+            toast.info(response.message || "Please complete your profile.");
+            navigate("/complete-profile");
+          } else {
+            toast.success(
+              response.message || "Login successful! Welcome back!"
+            );
+            navigate("/dashboard");
+          }
+        } else if (userType === "coordinator") {
+          toast.success(
+            response.message || "Login successful! Welcome, Coordinator!"
+          );
+          navigate("/coordinator/dashboard");
         }
       } else {
-        toast.error(response.message || "Authentication failed");
+        toast.error(
+          response.message ||
+            "Authentication failed. Please check your credentials."
+        );
       }
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
+      // Handle login errors
+      toast.error("An error occurred. Please try again later.");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle user type change with feedback
+  const handleUserTypeChange = (type) => {
+    setUserType(type);
+    toast.info(`Switched to ${type} login`, { autoClose: 1500 });
+  };
+
   return (
     <div className="min-h-screen bg-white overflow-hidden">
+      {/* Toast notifications container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+      />
+
+      {/* Sticky Navigation Bar - Hidden on mobile */}
       <div className="hidden md:block fixed top-0 left-0 right-0 z-50">
         <Navbar />
       </div>
       <div className="flex flex-col md:flex-row h-screen">
+        {/* Left Section - Login Form */}
         <div className="w-full mt-9 md:w-1/2 flex flex-col justify-center items-center p-8">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-semibold text-center mb-2 text-gray-800">
@@ -81,6 +131,8 @@ const LoginPage = () => {
             <p className="text-center text-gray-500 mb-6">
               Select your account type
             </p>
+
+            {/* User Type Selection Buttons */}
             <div className="flex rounded-md overflow-hidden mb-6 border border-gray-200 shadow-sm">
               <button
                 type="button"
@@ -89,7 +141,7 @@ const LoginPage = () => {
                     ? "bg-gray-800 text-white"
                     : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
-                onClick={() => setUserType("student")}
+                onClick={() => handleUserTypeChange("student")}
               >
                 Student
               </button>
@@ -100,11 +152,13 @@ const LoginPage = () => {
                     ? "bg-gray-800 text-white"
                     : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
-                onClick={() => setUserType("coordinator")}
+                onClick={() => handleUserTypeChange("coordinator")}
               >
                 Coordinator
               </button>
             </div>
+
+            {/* Login Form */}
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label
@@ -154,6 +208,8 @@ const LoginPage = () => {
             </form>
           </div>
         </div>
+
+        {/* Right Section - Login Image (Desktop only) */}
         <div className="hidden md:block md:w-1/2 bg-gray-50">
           <div className="h-full flex items-center justify-center p-8">
             <img

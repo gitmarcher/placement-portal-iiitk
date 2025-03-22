@@ -10,7 +10,9 @@ import { IoChevronBackOutline } from "react-icons/io5";
 import { BsDownload } from "react-icons/bs";
 import { fetchDrives } from "../API/getDrives"; // Adjust path as needed
 import styles from "./StudentDrive.module.css";
-
+import { StudentCredContext } from "../contexts/StudentCredContext";
+import { useContext } from "react";
+import { toast, ToastContainer } from "react-toastify";
 const CoordinatorDrive = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -18,23 +20,45 @@ const CoordinatorDrive = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [currentTab, setCurrentTab] = useState("experiences");
   const [display, setDisplay] = useState("1");
-  const [drives, setDrives] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { studentCreds } = useContext(StudentCredContext);
+  // Handle possible null or undefined studentCreds
+  const { creds, type, username } = studentCreds?.creds || {};
+  const userId = creds;
+  const userType = type;
 
+  console.log(
+    "CoordinatorDashboard - studentCreds:",
+    userId,
+    userType,
+    username
+  );
   useEffect(() => {
-    const loadDrives = async () => {
-      try {
-        const data = await fetchDrives(1, 100);
-        console.log("Fetched drives:", data.drives); // Debug log to inspect data
-        setDrives(data.drives || []);
-      } catch (error) {
-        console.error("Error fetching drives:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadDrives();
-  }, []);
+    console.log(
+      "CoordinatorDashboard - Checking authentication - studentCreds:",
+      studentCreds
+    );
+    if (!studentCreds || !studentCreds.creds || !studentCreds.creds.creds) {
+      console.log("No studentCreds found, redirecting to /login");
+      toast.error("You must be logged in to access the dashboard.");
+      navigate("/login", { replace: true });
+      console.log(userId);
+      return;
+    }
+
+    if (!userId) {
+      console.log("No userId found, redirecting to /login");
+      toast.error("You must be logged in to access the dashboard.");
+      navigate("/login", { replace: true });
+    } else if (userType !== "coordinator") {
+      // console.log("User is not a student, redirecting to:", userType === "coordinator" ? "/coordinator/dashboard" : "/");
+      toast.error("Only coordinator can access this dashboard.");
+      navigate(userType === "coordinator" ? "/coordinator/dashboard" : "/", {
+        replace: true
+      });
+    } else {
+      console.log("User authenticated as coordinator, proceeding");
+    }
+  }, [studentCreds, userId, userType, navigate]);
 
   useEffect(() => {
     const handleResize = () => {

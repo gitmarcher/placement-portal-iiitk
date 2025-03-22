@@ -1,4 +1,5 @@
-import api from "./index";
+// src/API/authentication.js
+import api from "./index"; // Assuming this is your axios instance
 
 export const login = async (email, password, userType) => {
     try {
@@ -20,8 +21,6 @@ export const login = async (email, password, userType) => {
                 username: data.username,
                 userType: data.userType,
                 message: data.message,
-                // Store redirect URL if you want to handle redirection programmatically
-                // redirectUrl: data.userType === 'student' ? '/complete-student-profile' : '/complete-profile'
             };
         }
         
@@ -43,7 +42,6 @@ export const login = async (email, password, userType) => {
             
             switch (status) {
                 case 400:
-                    // Handle invalid credentials or invalid user type
                     return {
                         login: false,
                         message: data.error || "Invalid username or password"
@@ -60,13 +58,11 @@ export const login = async (email, password, userType) => {
                     };
             }
         } else if (error.request) {
-            // The request was made but no response was received
             return {
                 login: false,
                 message: "Network error. Please check your connection."
             };
         } else {
-            // Something happened in setting up the request
             return {
                 login: false,
                 message: "An error occurred. Please try again."
@@ -75,4 +71,29 @@ export const login = async (email, password, userType) => {
     }
 };
 
- 
+export const logout = async () => {
+    try {
+        const response = await api.post("/auth/logout");
+        const data = response.data;
+        
+        return {
+            success: response.status === 200,
+            message: data.message || "Logged out successfully"
+        };
+    } catch (error) {
+        console.error("Logout error:", error);
+        
+        if (error.response) {
+            const { status, data } = error.response;
+            return {
+                success: false,
+                message: data.error || "Logout failed"
+            };
+        }
+        
+        return {
+            success: false,
+            message: "An error occurred during logout"
+        };
+    }
+};

@@ -1,7 +1,4 @@
-// to add: add salt to password
-
-
-
+// server/src/controllers/authController.js
 const bcrypt = require('bcrypt');
 
 const StudentCred = require('../models/studentCred.js');
@@ -10,18 +7,16 @@ const CoordinatorCred = require('../models/coordinatorCred.js');
 const generateTokenAndSetCookie = require('../jwt/generate.js');
 const Coordinator = require('../models/coordinatorModel.js');
 const Student = require('../models/studentModel.js');
+
 const logout = async(req, res) => {
     try{
         res.cookie('jwt',"",{maxAge: 0});
         res.status(200).json({message: "User logged out successfully"});
-
     }catch{
         console.error('Error in logout controller:', error.message);
         res.status(500).json({error: "Internal Server error while logging out user"});        
     }
-
 };
-
 
 const login = async (req, res) => {
     const { username, password, userType } = req.body;
@@ -68,7 +63,6 @@ const login = async (req, res) => {
         res.status(500).json({ error: "Internal Server error" });
     }
 };
-
 
 // export
 module.exports = {

@@ -5,11 +5,12 @@ const StudentCredContext = createContext();
 const StudentCredProvider = ({ children }) => {
   const [studentCreds, setStudentCreds] = useState({
     creds: "",
-    username: ""
+    username: "",
+    type: ""
   });
 
-  const updateStudentCreds = (creds, username) => {
-    setStudentCreds({ creds, username });
+  const updateStudentCreds = (creds, username,type) => {
+    setStudentCreds({ creds, username, type });
   };
 
   return (
