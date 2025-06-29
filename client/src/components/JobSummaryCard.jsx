@@ -5,7 +5,7 @@ import { BsCurrencyRupee } from "react-icons/bs";
 import { FaUsers } from "react-icons/fa";
 import { GoShareAndroid } from "react-icons/go";
 import { MdBookmark, MdOutlineBookmarkBorder } from "react-icons/md";
-import { toast } from "react-toastify";
+import { toastService } from "./Toast";
 
 function CompanyBanner({ job }) {
   const [isBookmarkClicked, setIsBookmarkClicked] = useState(false);
@@ -19,10 +19,10 @@ function CompanyBanner({ job }) {
     const currentUrl = window.location.href;
     navigator.clipboard
       .writeText(currentUrl)
-      .then(() => toast.success("URL copied to clipboard!"))
+      .then(() => toastService.success("URL copied to clipboard"))
       .catch((error) => {
         console.error("Failed to copy URL: ", error);
-        toast.error("Failed to copy URL");
+        toastService.error("Failed to copy URL");
       });
   }
 
@@ -31,89 +31,138 @@ function CompanyBanner({ job }) {
       setIsBookmarkClicked((prev) => {
         console.log("Bookmark clicked", prev);
         if (prev) {
-          toast.error("Removing from bookmarks");
+          toastService.success("Removed from bookmarks");
         } else {
-          toast.success("Adding to bookmarks");
+          toastService.success("Added to bookmarks");
         }
         return !prev;
       });
     } catch (error) {
       console.error("Failed to toggle bookmark: ", error);
-      toast.error("Failed to toggle bookmark");
+      toastService.error("Failed to toggle bookmark");
     }
   }
 
   return (
     <div className="w-full font-ubuntu mt-3">
-      <div className="right-0 pl-[1.2rem] border-gray-100 border-2 border-solid p-4 mb-2 sm:rounded-xl sm:mx-12">
-        <div className="flex justify-center h-full float-right top-[10rem] ml-[-4rem] sm:float-left sm:ml-0">
-          <div className="w-12 h-full flex items-center mb-2 py-4 mx-6 mr-[1.5rem] sm:w-16">
-            <img
-              src={job.company_logo || "/default-logo.png"}
-              alt={job.company_name || "Company"}
-              className="w-full h-auto"
-            />
+      {/* Mobile-optimized responsive banner */}
+      <div className="border-gray-200 border-2 rounded-xl mx-4 md:mx-12 p-4 md:p-6 bg-white shadow-sm">
+        {/* Header section with logo and company info */}
+        <div className="flex items-start gap-4 mb-4">
+          {/* Company Logo */}
+          <div className="flex-shrink-0">
+            <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+              <img
+                src={job.company_logo || "/default-logo.png"}
+                alt={job.company_name || "Company"}
+                className="w-full h-full object-contain rounded-lg p-1"
+                onError={(e) => {
+                  e.target.src = "/default-logo.png";
+                  e.target.onerror = null;
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Company info and type badge */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+                  {job.company_name || "Unknown Company"}
+                </h1>
+                <p className="text-sm md:text-base text-gray-600 mt-1">
+                  {job.drive_name || "Unknown Position"}
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <span className="inline-block px-3 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-full">
+                  {job.type_of_role || "Unknown Type"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex flex-col gap-3 sm:gap-5">
-          <div className="flex flex-row sm:flex-row justify-between gap-2 sm:items-center sm:gap-4">
-            <div className="flex flex-col">
-              <div className="flex flex-row sm:flex-row sm:items-center gap-4">
-                <div className="sm:2xl text-3xl font-bold">
-                  {job.company_name || "Unknown Company"}
-                </div>
-                <div className="text-red-500 mx-5 px-5 border-red-500 border-2 py-1 my-3 text-xs w-fit">
-                  {job.type_of_role || "Unknown Type"}
-                </div>
-              </div>
-              <div className="text-gray-500 text-sm sm:text-base">
-                {job.drive_name || "Unknown Position"}
-              </div>
+
+        {/* Job details section */}
+        <div className="space-y-4">
+          {/* Key details row */}
+          <div className="flex flex-wrap gap-3 md:gap-6">
+            <div className="flex items-center gap-2 text-gray-600">
+              <CiLocationOn size={18} className="flex-shrink-0" />
+              <span className="text-sm md:text-base">{locationDisplay}</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <SlCalender size={18} className="flex-shrink-0" />
+              <span className="text-sm md:text-base">
+                {job.duration || "Not specified"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <BsCurrencyRupee size={18} className="flex-shrink-0" />
+              <span className="text-sm md:text-base">
+                {job.ctc || "Not specified"}
+              </span>
             </div>
           </div>
 
-          <div className="font-semibold flex flex-wrap gap-1.5 sm:gap-4">
-            <div className="flex items-center text-gray-500 text-base font-normal gap-0.2 sm:gap-1">
-              <CiLocationOn size={23} />
-              {locationDisplay}
-            </div>
-            <div className="flex items-center font-normal text-gray-500 gap-1 sm:gap-2 text-base">
-              <SlCalender size={23} />
-              {job.duration || "Not specified"}
-            </div>
-            <div className="flex items-center font-normal text-gray-500 gap-[0.5px] sm:gap-1 text-base">
-              <BsCurrencyRupee size={23} />
-              {job.ctc || "Not specified"}
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 sm:gap-4">
-            <div className="text-red-500 font-normal text-base">
-              Apply before{" "}
+          {/* Deadline section */}
+          <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+            <p className="text-red-700 font-medium text-sm md:text-base">
+              📅 Apply before{" "}
               {job.deadline
-                ? new Date(job.deadline).toLocaleString()
+                ? new Date(job.deadline).toLocaleString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true
+                  })
                 : "Not specified"}
-            </div>
+            </p>
           </div>
-          <div className="text-base flex justify-between text-gray-500">
-            <div>
-              <FaUsers size={23} className="float-left mr-3" />
-              {job.applied_students?.length || 0} applicants
+
+          {/* Bottom section with applicants and actions */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-2 text-gray-600">
+              <FaUsers size={18} className="flex-shrink-0" />
+              <span className="text-sm md:text-base">
+                {job.applied_students?.length || 0} applicant
+                {(job.applied_students?.length || 0) !== 1 ? "s" : ""}
+              </span>
             </div>
-            <div className="flex items-center gap-4 mr-6">
-              {isBookmarkClicked ? (
-                <MdBookmark size={25} onClick={handleBookmarkClick} />
-              ) : (
-                <MdOutlineBookmarkBorder
-                  size={25}
-                  onClick={handleBookmarkClick}
-                />
-              )}
-              <GoShareAndroid
-                size={25}
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleBookmarkClick}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                title={
+                  isBookmarkClicked
+                    ? "Remove from bookmarks"
+                    : "Add to bookmarks"
+                }
+              >
+                {isBookmarkClicked ? (
+                  <MdBookmark size={22} className="text-coral-red" />
+                ) : (
+                  <MdOutlineBookmarkBorder
+                    size={22}
+                    className="text-gray-500 hover:text-coral-red"
+                  />
+                )}
+              </button>
+              <button
                 onClick={handleShareClick}
-                className="cursor-pointer"
-              />
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                title="Share job posting"
+              >
+                <GoShareAndroid
+                  size={22}
+                  className="text-gray-500 hover:text-coral-red"
+                />
+              </button>
             </div>
           </div>
         </div>

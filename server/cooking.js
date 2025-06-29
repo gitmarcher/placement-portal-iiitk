@@ -16,7 +16,7 @@ const coordroute = require('./src/routes/coordinator/coordroute.js');
 
 app.use("/api/auth",authRoutes);
 app.use("/api/student",studentroute);
-app.use("/api/coord",coordroute);
+app.use("/api/coordinator",coordroute);
 
 
 module.exports = app;

@@ -24,6 +24,74 @@ const criteria = new mongoose.Schema({
         enum: ["ALL", "CSE", "ECE", "AIDS", "CSY"],
     },
     work_experience_count: { type: Number, required: false, min: 0, default: 0 },
+    max_backlogs: { type: Number, required: false, min: 0, default: 0 },
+});
+
+const experienceSchema = new mongoose.Schema({
+    comment: { type: String, required: true },
+    likes: { type: Number, default: 0 },
+    studentName: { type: String, required: true },
+    studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
+    timestamp: { type: Date, default: Date.now }
+});
+
+// Custom required details schema for additional fields beyond standard ones
+const customRequiredDetailSchema = new mongoose.Schema({
+    field_id: { type: String, required: true }, // unique identifier for the field
+    field_name: { type: String, required: true }, // internal name (e.g., "video_resume_link")
+    field_label: { type: String, required: true }, // display label (e.g., "Video Resume Link")
+    field_type: { 
+        type: String, 
+        required: true,
+        enum: ['text', 'url', 'textarea', 'select', 'number', 'date', 'file']
+    },
+    is_required: { type: Boolean, default: true },
+    options: [String], // for select type fields
+    placeholder: { type: String },
+    validation_regex: { type: String }, // for custom validation
+    max_length: { type: Number }, // for text/textarea fields
+    help_text: { type: String } // additional guidance for students
+});
+
+// Custom questions schema for additional questions/sections
+const customQuestionSchema = new mongoose.Schema({
+    question_id: { type: String, required: true }, // unique identifier
+    question_text: { type: String, required: true }, // the actual question
+    question_type: { 
+        type: String, 
+        required: true,
+        enum: ['text', 'textarea', 'select', 'radio', 'checkbox', 'number', 'date', 'file']
+    },
+    is_required: { type: Boolean, default: true },
+    options: [String], // for select/radio/checkbox types
+    placeholder: { type: String },
+    max_length: { type: Number },
+    help_text: { type: String },
+    section_title: { type: String } // optional section grouping
+});
+
+// Schema for storing custom field responses in applications
+const customFieldResponseSchema = new mongoose.Schema({
+    field_id: { type: String, required: true },
+    field_value: { type: mongoose.Schema.Types.Mixed } // can store string, number, array, etc.
+});
+
+// Schema for storing custom question responses in applications
+const customQuestionResponseSchema = new mongoose.Schema({
+    question_id: { type: String, required: true },
+    answer: { type: mongoose.Schema.Types.Mixed } // can store string, number, array, etc.
+});
+
+// Round results schema for tracking student progress
+const roundResultsSchema = new mongoose.Schema({
+    round_number: { type: Number, required: true },
+    round_name: { type: String, required: true },
+    selected_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+    rejected_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+    waitlisted_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+    is_published: { type: Boolean, default: false },
+    published_at: { type: Date },
+    published_by: { type: mongoose.Schema.Types.ObjectId, ref: 'Coordinator' }
 });
 
 const drive = new mongoose.Schema({
@@ -53,6 +121,7 @@ const drive = new mongoose.Schema({
         cgpa: { type: Number },
         stream: { type: [String] },
         work_experience_count: { type: Number },
+        max_backlogs: { type: Number },
     },
     required_details: {
         type: [String],
@@ -80,12 +149,52 @@ const drive = new mongoose.Schema({
             "location",
         ],
     },
-    // New field to store applied students
+    // Custom required details beyond standard ones
+    custom_required_details: [customRequiredDetailSchema],
+    // Custom questions for additional information gathering
+    custom_questions: [customQuestionSchema],
+    // New field to indicate if the drive is currently accepting applications
+    isActive: { type: Boolean, default: true },
+    // New field to indicate if the drive is accepting applications (separate from overall active status)
+    acceptingApplications: { type: Boolean, default: true },
+    // Enhanced applied_students field with more details
     applied_students: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student',
-        default: []
-    }]
+        student: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
+        name: { type: String, required: true },
+        email: { type: String, required: true },
+        resumeLink: { type: String },
+        phone: { type: String },
+        applicationTimestamp: { type: Date, default: Date.now },
+        current_status: { 
+            type: String, 
+            enum: [
+                'Applied', 
+                'Resume Shortlisted', 
+                'Interview I Selected', 
+                'Interview II Selected', 
+                'Final Selected', 
+                'Rejected',
+                'Waitlisted - Round 1',
+                'Waitlisted - Round 2', 
+                'Waitlisted - Round 3'
+            ], 
+            default: 'Applied' 
+        },
+        rejected_at_round: { type: Number, default: null }, // Track which round student was rejected at
+        last_status_update: { type: Date, default: Date.now },
+        // Responses to custom required details
+        custom_field_responses: [customFieldResponseSchema],
+        // Responses to custom questions
+        custom_question_responses: [customQuestionResponseSchema]
+    }],
+    // New field to store student experiences
+    experiences: [experienceSchema],
+    // Results tracking for each round
+    round_results: [roundResultsSchema],
+    // Track current active round for results
+    current_result_round: { type: Number, default: 1 },
+    // Track if results process has started
+    results_started: { type: Boolean, default: false },
 });
 
 // On Delete Cascade when a drive is deleted remove the drive reference from all students' applied_drives

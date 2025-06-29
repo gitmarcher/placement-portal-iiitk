@@ -1,7 +1,7 @@
 // src/components/withAuth.jsx
 import React, { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toastService } from "./Toast";
 import { StudentCredContext } from "../contexts/StudentCredContext";
 
 const withAuth = (WrappedComponent, allowedRole = null) => {
@@ -14,12 +14,15 @@ const withAuth = (WrappedComponent, allowedRole = null) => {
       console.log("withAuth - studentCreds:", studentCreds);
       if (!userId) {
         console.log("Not authenticated, redirecting to /login");
-        toast.error("You must be logged in to access this page.");
+        toastService.error("You must be logged in to access this page");
         navigate("/login", { replace: true });
       } else if (allowedRole && userType !== allowedRole) {
         console.log(`Role mismatch: ${userType} !== ${allowedRole}`);
-        toast.error(`Only ${allowedRole}s can access this page.`);
-        navigate(userType === "coordinator" ? "/coordinator/dashboard" : "/dashboard", { replace: true });
+        toastService.error(`Only ${allowedRole}s can access this page`);
+        navigate(
+          userType === "coordinator" ? "/coordinator/dashboard" : "/dashboard",
+          { replace: true }
+        );
       }
     }, [userId, userType, navigate, allowedRole]);
 
@@ -31,7 +34,9 @@ const withAuth = (WrappedComponent, allowedRole = null) => {
   };
 
   // Set display name for debugging
-  AuthComponent.displayName = `withAuth(${WrappedComponent.displayName || WrappedComponent.name || "Component"})`;
+  AuthComponent.displayName = `withAuth(${
+    WrappedComponent.displayName || WrappedComponent.name || "Component"
+  })`;
 
   return AuthComponent;
 };

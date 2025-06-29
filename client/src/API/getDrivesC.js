@@ -2,12 +2,12 @@ import api from "./index";
 
 const getDrivesC = async (page = 1, limit = 10) => {
     try {
-        const response = await api.get("/coord/drive/all", {
+        const response = await api.get("/coordinator/drive/all", {
             params: { page, limit }, // Add pagination parameters
         });
 
         // Log raw response for debugging
-        console.log('Raw drive data:', response.data);
+        console.log('Raw coordinator drive data:', response.data);
 
         // Ensure response.data.drives is an array
         return {
@@ -17,7 +17,7 @@ const getDrivesC = async (page = 1, limit = 10) => {
             totalDrives: response.data.totalDrives || 0
         };
     } catch (error) {
-        console.error('Error fetching drives:', error);
+        console.error('Error fetching coordinator drives:', error);
         console.error('Error response:', error.response?.data); // Log error details if available
         // Return a default structure on error
         return {
@@ -27,6 +27,7 @@ const getDrivesC = async (page = 1, limit = 10) => {
             totalDrives: 0
         };
     }
-}
+};
+
 export { getDrivesC };
 export default getDrivesC;

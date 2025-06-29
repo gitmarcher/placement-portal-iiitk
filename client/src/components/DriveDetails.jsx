@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { EditorState } from "draft-js";
-import { toast, ToastContainer } from "react-toastify";
+import { EditorState, convertToRaw } from "draft-js";
+import draftToHtml from "draftjs-to-html";
+import { toastService } from "./Toast";
 import addDrive from "../API/addDrive";
 import DriveBasicDetails from "./DriveBasicDetails";
 import AboutWorkSection from "./AboutWorkSection";
 import EligibilitySection from "./EligibilitySection";
 import RoundsSection from "./RoundsSection";
 import RequiredDetailsSection from "./RequiredDetailsSection";
-import "react-toastify/dist/ReactToastify.css";
+import CustomRequiredDetailsSection from "./CustomRequiredDetailsSection";
+import CustomQuestionsSection from "./CustomQuestionsSection";
 
 const DriveDetails = () => {
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
@@ -30,9 +32,12 @@ const DriveDetails = () => {
       graduation_year: "",
       cgpa: "",
       stream: [],
-      work_experience_count: ""
+      work_experience_count: "",
+      max_backlogs: ""
     },
-    required_details: []
+    required_details: [],
+    custom_required_details: [],
+    custom_questions: []
   });
 
   const handleChange = (e) => {
@@ -71,6 +76,20 @@ const DriveDetails = () => {
     });
   };
 
+  const handleCustomFieldsChange = (customFields) => {
+    setFormData((prev) => ({
+      ...prev,
+      custom_required_details: customFields
+    }));
+  };
+
+  const handleCustomQuestionsChange = (customQuestions) => {
+    setFormData((prev) => ({
+      ...prev,
+      custom_questions: customQuestions
+    }));
+  };
+
   const handleRoundChange = (rounds) => {
     setFormData((prevData) => ({ ...prevData, rounds }));
   };
@@ -78,7 +97,11 @@ const DriveDetails = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const aboutText = editorState.getCurrentContent().getPlainText();
+      // Convert Draft.js content to HTML to preserve formatting
+      const contentState = editorState.getCurrentContent();
+      const rawContentState = convertToRaw(contentState);
+      const aboutHtml = draftToHtml(rawContentState);
+
       const locationArray = formData.location
         .split(",")
         .map((loc) => loc.trim())
@@ -96,7 +119,7 @@ const DriveDetails = () => {
         drive_name: formData.drive_name,
         company_name: formData.company_name,
         company_logo: formData.company_logo,
-        about: aboutText,
+        about: aboutHtml, // Now saving HTML instead of plain text
         type_of_role: formData.type_of_role,
         location: locationArray,
         ctc: formData.ctc,
@@ -120,34 +143,36 @@ const DriveDetails = () => {
           cgpa: Number(formData.criteria.cgpa) || undefined,
           stream: streamArray,
           work_experience_count:
-            Number(formData.criteria.work_experience_count) || undefined
+            Number(formData.criteria.work_experience_count) || undefined,
+          max_backlogs: Number(formData.criteria.max_backlogs) || undefined
         },
-        required_details: formData.required_details
+        required_details: formData.required_details,
+        custom_required_details: formData.custom_required_details || [],
+        custom_questions: formData.custom_questions || []
       };
 
       console.log("Submitting payload:", payload);
       const res = await addDrive(payload);
       console.log("Response from addDrive:", res);
       if (res.message === "Drive created successfully") {
-        toast.success("Drive created successfully");
+        toastService.success("Drive created successfully");
       } else {
-        toast.error(res.error || "Error creating drive");
+        toastService.error(res.error || "Failed to create drive");
       }
     } catch (err) {
       console.error("Error submitting form:", err);
       if (err.message.includes("duplicate key")) {
-        toast.error(
-          `A drive with the name "${formData.drive_name}" already exists. Please use a different name.`
+        toastService.error(
+          `Drive "${formData.drive_name}" already exists. Please use a different name`
         );
       } else {
-        toast.error(err.message || "Error creating drive");
+        toastService.error(err.message || "Failed to create drive");
       }
     }
   };
 
   return (
     <div className="max-w-5xl mx-auto mt-12 mb-16 bg-white rounded-2xl shadow-xl p-8 font-sans transition-all duration-300 hover:shadow-2xl">
-      <ToastContainer position="top-center" autoClose={2000} hideProgressBar />
       <h1 className="text-4xl font-extrabold text-center text-gray-900 mb-10 tracking-tight">
         Create a New Drive
       </h1>
@@ -168,6 +193,16 @@ const DriveDetails = () => {
         <RequiredDetailsSection
           formData={formData}
           handleCheckboxChange={handleRequiredDetailsChange}
+        />
+        <hr className="border-t border-gray-200 my-8" />
+        <CustomRequiredDetailsSection
+          formData={formData}
+          onCustomFieldsChange={handleCustomFieldsChange}
+        />
+        <hr className="border-t border-gray-200 my-8" />
+        <CustomQuestionsSection
+          formData={formData}
+          onCustomQuestionsChange={handleCustomQuestionsChange}
         />
         <hr className="border-t border-gray-200 my-8" />
         <RoundsSection formData={formData} setRounds={handleRoundChange} />

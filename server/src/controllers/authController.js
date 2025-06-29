@@ -40,7 +40,9 @@ const login = async (req, res) => {
         await user.save(); // Save the updated document
 
         const profile = await ProfileModel.findOne({ creds: user._id });
-        generateTokenAndSetCookie(user._id.toString(), res);
+        
+        // Generate token with username and role
+        generateTokenAndSetCookie(user._id.toString(), user.username, userType, res);
 
         if (!profile) {
             return res.status(201).json({

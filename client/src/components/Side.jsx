@@ -3,14 +3,37 @@ import React, { useContext } from "react";
 import { useStudentDetails } from "../contexts/StudentDetailsContext";
 import { Link, useNavigate } from "react-router-dom";
 import { StudentCredContext } from "../contexts/StudentCredContext";
-import { toast } from "react-toastify";
+import { toastService } from "./Toast";
 import { logout } from "../API/authentication"; // Import logout
 
 const Sidebar = ({ onToggleCalendar }) => {
   const { studentData } = useStudentDetails();
-  const studentName = studentData.name || "Student";
-  const { updateStudentCreds } = useContext(StudentCredContext);
+  const { updateStudentCreds, studentCreds } = useContext(StudentCredContext);
   const navigate = useNavigate();
+
+  // Get user name and role-appropriate display
+  const getUserDisplayInfo = () => {
+    const userRole = studentCreds?.type;
+    if (userRole === "coordinator") {
+      return {
+        name: studentData.name || "Coordinator",
+        displayRole: "Coordinator"
+      };
+    } else {
+      return {
+        name: studentData.name || "Student",
+        displayRole: "Student"
+      };
+    }
+  };
+
+  const userInfo = getUserDisplayInfo();
+
+  // Get dashboard URL based on user role
+  const getDashboardUrl = () => {
+    const userRole = studentCreds?.type;
+    return userRole === "coordinator" ? "/coordinator/dashboard" : "/dashboard";
+  };
 
   const handleLogout = async (e) => {
     e.preventDefault();
@@ -18,16 +41,17 @@ const Sidebar = ({ onToggleCalendar }) => {
       const response = await logout();
 
       if (response.success) {
-        // Clear student credentials
-        updateStudentCreds(null, null);
-        
-        toast.success(response.message || "Logged out successfully!");
+        // Clear student credentials from context and localStorage
+        updateStudentCreds("", "", "");
+        localStorage.removeItem("studentCreds");
+
+        toastService.success(response.message || "Logged out successfully");
         navigate("/login"); // Redirect to login page
       } else {
-        toast.error(response.message || "Logout failed");
+        toastService.error(response.message || "Logout failed");
       }
     } catch (error) {
-      toast.error("An error occurred during logout");
+      toastService.error("Logout failed. Please try again");
       console.error("Logout error:", error);
     }
   };
@@ -43,7 +67,7 @@ const Sidebar = ({ onToggleCalendar }) => {
           />
         </div>
         <div>
-          <p className="font-semibold text-gray-800">{studentName}</p>
+          <p className="font-semibold text-gray-800">{userInfo.name}</p>
           <p className="text-sm text-blue-500 cursor-pointer">
             <Link to="/profile">View Profile</Link>
           </p>
@@ -52,7 +76,7 @@ const Sidebar = ({ onToggleCalendar }) => {
       <nav>
         <ul className="space-y-2 flex flex-col items-center justify-center">
           <li className="py-2 border-b border-black w-full text-center">
-            <Link to="/dashboard">Dashboard</Link>
+            <Link to={getDashboardUrl()}>Dashboard</Link>
           </li>
           <li
             className="py-2 border-b border-black w-full text-center cursor-pointer"
@@ -60,8 +84,8 @@ const Sidebar = ({ onToggleCalendar }) => {
           >
             Calendar
           </li>
-          <li 
-            className="py-2 border-b border-black w-full text-center cursor-pointer" 
+          <li
+            className="py-2 border-b border-black w-full text-center cursor-pointer"
             onClick={handleLogout}
           >
             Log Out

@@ -8,7 +8,7 @@ import { signupbg, prev, next } from "../assets";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import completeProfile from "../API/completeProfile";
 import { StudentCredContext } from "../contexts/StudentCredContext";
-import { toast, ToastContainer } from "react-toastify";
+import { toastService } from "../components/Toast";
 import { useNavigate } from "react-router-dom";
 
 // CompleteProfile component manages multi-step profile completion for students
@@ -51,21 +51,7 @@ const CompleteProfile = () => {
 
   // Hooks and context
   const { studentCreds } = useContext(StudentCredContext);
-  const { creds: userId, type: userType, username } = studentCreds || {};
-  
-
   const navigate = useNavigate();
-  console.log("CompleteProfile - studentCreds:", userId, userType, username);
-  // Authentication and role validation on component mount
-  useEffect(() => {
-    if (!userId) {
-      toast.error("You must be logged in to complete your profile.");
-      navigate("/login", { replace: true });
-    } else if (userId.type !== "student") {
-      toast.error("Only students can complete this profile.");
-      navigate("/dashboard", { replace: true });
-    }
-  }, [userId.creds, userId.userType, navigate]);
 
   // Step navigation functions
   const nextStep = () => setStep(step + 1);
@@ -91,15 +77,16 @@ const CompleteProfile = () => {
     // Validate top-level fields
     for (const field of topLevelFields) {
       if (field.isArray) {
-        const value = field.key === "phone_no"
-          ? formData[field.key]
-          : formData[field.key].split(",").map((item) => item.trim());
+        const value =
+          field.key === "phone_no"
+            ? formData[field.key]
+            : formData[field.key].split(",").map((item) => item.trim());
         if (!value.length || value.every((item) => item === "")) {
-          toast.error(`${field.label} cannot be empty.`);
+          toastService.error(`${field.label} is required`);
           return false;
         }
       } else if (!formData[field.key]) {
-        toast.error(`${field.label} cannot be empty.`);
+        toastService.error(`${field.label} is required`);
         return false;
       }
     }
@@ -115,7 +102,7 @@ const CompleteProfile = () => {
 
     for (const field of addressFields) {
       if (!formData.address[field.key]) {
-        toast.error(`Address: ${field.label} cannot be empty.`);
+        toastService.error(`Address ${field.label} is required`);
         return false;
       }
     }
@@ -138,11 +125,11 @@ const CompleteProfile = () => {
       const value = formData.academics[field.key];
       if (field.allowZero) {
         if (value === undefined || value === null || value === "") {
-          toast.error(`Academics: ${field.label} cannot be empty.`);
+          toastService.error(`${field.label} is required`);
           return false;
         }
       } else if (!value) {
-        toast.error(`Academics: ${field.label} cannot be empty.`);
+        toastService.error(`${field.label} is required`);
         return false;
       }
     }
@@ -162,7 +149,7 @@ const CompleteProfile = () => {
       // Transform data for API submission
       const transformedData = {
         ...formData,
-        creds: userId,
+        creds: studentCreds?.creds?.creds,
         work_experience: formData.work_experience
           ? formData.work_experience.split(",").map((item) => item.trim())
           : [],
@@ -170,21 +157,27 @@ const CompleteProfile = () => {
           ? formData.additional_skills.split(",").map((item) => item.trim())
           : []
       };
-      
+
       const response = await completeProfile(transformedData);
       console.log("Form submitted:", transformedData);
 
       // Handle API response
       if (response.success) {
-        navigate("/dashboard");
-        toast.success("Profile completed successfully!");
+        // Navigate based on user role
+        const userRole = studentCreds?.type;
+        if (userRole === "coordinator") {
+          navigate("/coordinator/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+        toastService.success("Profile completed successfully");
         console.log("Profile completed successfully!");
       } else {
         console.error("Error completing profile:", response.message);
-        toast.error(response.message || "Error completing profile");
+        toastService.error(response.message || "Failed to complete profile");
       }
     } catch (error) {
-      toast.error("Error submitting form. Please try again.");
+      toastService.error("Failed to submit profile. Please try again");
       console.error("Error submitting form:", error);
     }
   };
@@ -198,18 +191,15 @@ const CompleteProfile = () => {
         backgroundRepeat: "no-repeat"
       }}
     >
-      {/* Toast notifications container */}
-      <ToastContainer />
-      
       {/* Navigation bar */}
       <Navbar />
-      
+
       {/* Main content */}
       <div className="flex-grow flex items-center justify-center relative">
         {/* Background overlay effects */}
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="absolute inset-0 backdrop-blur-lg"></div>
-        
+
         {/* Form container */}
         <div className="relative z-10 w-full max-w-lg mt-6 p-6 bg-white rounded-lg shadow-lg flex flex-col">
           {/* Back button */}

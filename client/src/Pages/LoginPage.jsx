@@ -4,8 +4,7 @@ import Navbar from "../components/Navbar";
 import { login_img } from "../assets";
 import { login } from "../API/authentication";
 import { useNavigate } from "react-router-dom";
-import "react-toastify/dist/ReactToastify.css";
-import { toast, ToastContainer } from "react-toastify"; // Added ToastContainer import
+import { toastService } from "../components/Toast";
 import { StudentCredContext } from "../contexts/StudentCredContext";
 
 // LoginPage component handles user authentication
@@ -37,12 +36,12 @@ const LoginPage = () => {
 
     // Basic form validation before submission
     if (!formData.username || !formData.password) {
-      toast.warn("Please fill in all fields.");
+      toastService.warning("Please fill in all fields");
       return;
     }
 
     setIsLoading(true);
-    toast.info("Attempting to log in...", { autoClose: 2000 });
+    toastService.info("Logging you in...");
 
     try {
       // Attempt login with provided credentials
@@ -56,11 +55,7 @@ const LoginPage = () => {
 
       if (response.login) {
         // Store user credentials in context
-        updateStudentCreds({
-          creds: response.userId,
-          username: response.username,
-          type: userType
-        });
+        updateStudentCreds(response.userId, response.username, userType);
 
         console.log("Stored credentials:", {
           creds: response.userId,
@@ -73,29 +68,24 @@ const LoginPage = () => {
           console.log("pf:", response.profileComplete);
           if (!response.profileComplete) {
             console.log("hello");
-            toast.info(response.message || "Please complete your profile.");
+            toastService.info("Profile completion required");
             navigate("/complete-profile");
           } else {
-            toast.success(
-              response.message || "Login successful! Welcome back!"
-            );
+            toastService.success("Login successful! Welcome back");
             navigate("/dashboard");
           }
         } else if (userType === "coordinator") {
-          toast.success(
-            response.message || "Login successful! Welcome, Coordinator!"
-          );
+          toastService.success("Login successful! Welcome, Coordinator");
           navigate("/coordinator/dashboard");
         }
       } else {
-        toast.error(
-          response.message ||
-            "Authentication failed. Please check your credentials."
+        toastService.error(
+          response.message || "Login failed. Please check your credentials"
         );
       }
     } catch (error) {
       // Handle login errors
-      toast.error("An error occurred. Please try again later.");
+      toastService.error("Login failed. Please try again later");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -105,18 +95,11 @@ const LoginPage = () => {
   // Handle user type change with feedback
   const handleUserTypeChange = (type) => {
     setUserType(type);
-    toast.info(`Switched to ${type} login`, { autoClose: 1500 });
+    toastService.info(`Switched to ${type} login`);
   };
 
   return (
     <div className="min-h-screen bg-white overflow-hidden">
-      {/* Toast notifications container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-      />
-
       {/* Sticky Navigation Bar - Hidden on mobile */}
       <div className="hidden md:block fixed top-0 left-0 right-0 z-50">
         <Navbar />

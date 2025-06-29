@@ -3,7 +3,7 @@ import api from "./index";
 const addDrive = async (driveDetails) => {
   try {
     console.log("Sending drive details to API:", driveDetails); // Debug log
-    const response = await api.post("/coord/drive/create", driveDetails);
+    const response = await api.post("/coordinator/drive/create", driveDetails);
     console.log("API response:", response.data); // Debug log
     return response.data;
   } catch (error) {

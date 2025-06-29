@@ -97,3 +97,22 @@ export const logout = async () => {
         };
     }
 };
+
+// Helper function to check if error is authorization related (but not token expiry)
+export const isAuthorizationError = (error) => {
+    if (!error.response) return false;
+    
+    const { status, data } = error.response;
+    
+    // Check for role-based authorization errors (don't logout for these)
+    if (status === 403 && data.code === "WRONG_ROLE") {
+        return { shouldLogout: false, userRole: data.userRole };
+    }
+    
+    // Check for authentication errors (should logout for these)
+    if (status === 401 && (data.code === "NO_TOKEN" || data.code === "TOKEN_EXPIRED" || data.code === "INVALID_TOKEN")) {
+        return { shouldLogout: true };
+    }
+    
+    return false;
+};

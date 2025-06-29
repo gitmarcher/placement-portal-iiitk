@@ -7,7 +7,7 @@ import EducationalDetailsTab from "./EducationalDetailsTab";
 import AdditionalDetailsTab from "./AdditionalDetailsTab";
 import HistoryTab from "./HistoryTab";
 import updateProfile from "../API/updateProfile"; // Imported API function
-import { toast, ToastContainer } from "react-toastify";
+import { toastService } from "./Toast";
 
 const Profile = () => {
   const { studentData, setStudentData } = useStudentDetails();
@@ -66,14 +66,14 @@ const Profile = () => {
       const response = await updateProfile(updatedProfileData);
 
       if (response.success) {
-        toast.success("Profile updated successfully!");
+        toastService.success("Profile updated successfully");
         setEditing(false); // Exit edit mode on success
       } else {
         throw new Error(response.message || "Failed to update profile");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile. Please try again.");
+      toastService.error("Failed to update profile. Please try again");
     } finally {
       setSaving(false);
     }
@@ -91,7 +91,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <ToastContainer />
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
         <div className="bg-neutral-200 p-6 pb-20 relative">
           <div className="flex justify-between items-center mb-4">

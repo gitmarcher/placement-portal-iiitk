@@ -162,6 +162,26 @@ const EligibilitySection = ({
             />
           </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="form-group">
+            <label
+              htmlFor="criteria.max_backlogs"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Maximum Backlogs Allowed
+            </label>
+            <input
+              type="text"
+              name="criteria.max_backlogs"
+              id="criteria.max_backlogs"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+              value={formData.criteria.max_backlogs || ""}
+              onChange={handleChange}
+              placeholder="e.g., 0 (no backlogs), 1, 2"
+            />
+          </div>
+          <div className="form-group">{/* Empty div for grid alignment */}</div>
+        </div>
       </div>
     </section>
   );

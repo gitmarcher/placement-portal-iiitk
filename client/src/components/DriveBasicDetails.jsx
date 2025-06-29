@@ -199,7 +199,10 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 <img
                   src={formData.company_logo}
                   alt="Company Logo"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain p-2 bg-white"
+                  onError={(e) => {
+                    e.target.src = "/default-logo.png";
+                  }}
                 />
               ) : (
                 <div className="text-center p-2">

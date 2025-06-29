@@ -17,14 +17,17 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "express-react-views": "^0.11.0",
     "express-session": "^1.18.0",
+    "json2xls": "^0.1.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.3",
     "passport": "^0.7.0",
     "passport-google-oauth2": "^0.2.0",
-    "pg": "^8.11.5"
+    "pg": "^8.11.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.4",
