@@ -10,9 +10,11 @@ import RoundsSection from "./RoundsSection";
 import RequiredDetailsSection from "./RequiredDetailsSection";
 import CustomRequiredDetailsSection from "./CustomRequiredDetailsSection";
 import CustomQuestionsSection from "./CustomQuestionsSection";
+import JDFilesSection from "./JDFilesSection";
 
 const DriveDetails = () => {
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
+  const [jdFiles, setJdFiles] = useState([]);
   const [formData, setFormData] = useState({
     drive_name: "",
     company_name: "",
@@ -94,6 +96,10 @@ const DriveDetails = () => {
     setFormData((prevData) => ({ ...prevData, rounds }));
   };
 
+  const handleJDFilesChange = (files) => {
+    setJdFiles(files);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -115,49 +121,123 @@ const DriveDetails = () => {
           ? formData.criteria.stream
           : ["ALL"];
 
-      const payload = {
-        drive_name: formData.drive_name,
-        company_name: formData.company_name,
-        company_logo: formData.company_logo,
-        about: aboutHtml, // Now saving HTML instead of plain text
-        type_of_role: formData.type_of_role,
-        location: locationArray,
-        ctc: formData.ctc,
-        duration: formData.duration,
-        number_of_positions: Number(formData.number_of_positions) || 0,
-        deadline: formData.deadline,
-        drive_date: formData.drive_date,
-        rounds: formData.rounds.map((round) => ({
-          round_number: Number(round.round_number) || 0,
-          round_name: round.round_name,
-          description: round.description
-        })),
-        criteria: {
-          tenth_percentage:
-            Number(formData.criteria.tenth_percentage) || undefined,
-          twelfth_percentage:
-            Number(formData.criteria.twelfth_percentage) || undefined,
-          graduation_degree: formData.criteria.graduation_degree || undefined,
-          graduation_year:
-            graduationYearArray.length > 0 ? graduationYearArray : undefined,
-          cgpa: Number(formData.criteria.cgpa) || undefined,
-          stream: streamArray,
-          work_experience_count:
-            Number(formData.criteria.work_experience_count) || undefined,
-          max_backlogs: Number(formData.criteria.max_backlogs) || undefined
-        },
-        required_details: formData.required_details,
-        custom_required_details: formData.custom_required_details || [],
-        custom_questions: formData.custom_questions || []
-      };
+      // Create FormData for multipart form submission
+      const formDataToSend = new FormData();
 
-      console.log("Submitting payload:", payload);
-      const res = await addDrive(payload);
-      console.log("Response from addDrive:", res);
-      if (res.message === "Drive created successfully") {
-        toastService.success("Drive created successfully");
+      // Append regular form fields
+      formDataToSend.append("drive_name", formData.drive_name);
+      formDataToSend.append("company_name", formData.company_name);
+      formDataToSend.append("company_logo", formData.company_logo);
+      formDataToSend.append("about", aboutHtml);
+      formDataToSend.append("type_of_role", formData.type_of_role);
+      formDataToSend.append("location", JSON.stringify(locationArray));
+      formDataToSend.append("ctc", formData.ctc);
+      formDataToSend.append("duration", formData.duration);
+      formDataToSend.append(
+        "number_of_positions",
+        Number(formData.number_of_positions) || 0
+      );
+      formDataToSend.append("deadline", formData.deadline);
+      formDataToSend.append("drive_date", formData.drive_date);
+
+      // Append rounds as JSON string
+      const roundsData = formData.rounds.map((round) => ({
+        round_number: Number(round.round_number) || 0,
+        round_name: round.round_name,
+        description: round.description
+      }));
+      formDataToSend.append("rounds", JSON.stringify(roundsData));
+
+      // Append criteria as JSON string
+      const criteriaData = {
+        tenth_percentage:
+          Number(formData.criteria.tenth_percentage) || undefined,
+        twelfth_percentage:
+          Number(formData.criteria.twelfth_percentage) || undefined,
+        graduation_degree: formData.criteria.graduation_degree || undefined,
+        graduation_year:
+          graduationYearArray.length > 0 ? graduationYearArray : undefined,
+        cgpa: Number(formData.criteria.cgpa) || undefined,
+        stream: streamArray,
+        work_experience_count:
+          Number(formData.criteria.work_experience_count) || undefined,
+        max_backlogs: Number(formData.criteria.max_backlogs) || undefined
+      };
+      formDataToSend.append("criteria", JSON.stringify(criteriaData));
+
+      // Append other data as JSON strings
+      formDataToSend.append(
+        "required_details",
+        JSON.stringify(formData.required_details)
+      );
+      formDataToSend.append(
+        "custom_required_details",
+        JSON.stringify(formData.custom_required_details || [])
+      );
+      formDataToSend.append(
+        "custom_questions",
+        JSON.stringify(formData.custom_questions || [])
+      );
+
+      // Append JD files
+      jdFiles.forEach((file) => {
+        formDataToSend.append("jd_files", file);
+      });
+
+      console.log("Submitting FormData with files:", jdFiles.length);
+
+      // Update the API call to send FormData
+      const backendUrl =
+        import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
+      const res = await fetch(`${backendUrl}/coordinator/drive/create`, {
+        method: "POST",
+        body: formDataToSend,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem(
+            "coordinatorAuthToken"
+          )}`
+        }
+      });
+
+      const responseData = await res.json();
+
+      if (responseData.message === "Drive created successfully") {
+        toastService.success(
+          `Drive created successfully! ${
+            responseData.uploaded_jd_files || 0
+          } JD files uploaded.`
+        );
+        // Reset form
+        setFormData({
+          drive_name: "",
+          company_name: "",
+          company_logo: "",
+          type_of_role: "",
+          location: "",
+          ctc: "",
+          duration: "",
+          number_of_positions: "",
+          deadline: "",
+          drive_date: "",
+          rounds: [],
+          criteria: {
+            tenth_percentage: "",
+            twelfth_percentage: "",
+            graduation_degree: "",
+            graduation_year: "",
+            cgpa: "",
+            stream: [],
+            work_experience_count: "",
+            max_backlogs: ""
+          },
+          required_details: [],
+          custom_required_details: [],
+          custom_questions: []
+        });
+        setJdFiles([]);
+        setEditorState(EditorState.createEmpty());
       } else {
-        toastService.error(res.error || "Failed to create drive");
+        toastService.error(responseData.error || "Failed to create drive");
       }
     } catch (err) {
       console.error("Error submitting form:", err);
@@ -204,6 +284,8 @@ const DriveDetails = () => {
           formData={formData}
           onCustomQuestionsChange={handleCustomQuestionsChange}
         />
+        <hr className="border-t border-gray-200 my-8" />
+        <JDFilesSection onFilesChange={handleJDFilesChange} />
         <hr className="border-t border-gray-200 my-8" />
         <RoundsSection formData={formData} setRounds={handleRoundChange} />
         <div className="flex justify-center mt-12">

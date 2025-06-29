@@ -195,6 +195,20 @@ const drive = new mongoose.Schema({
     current_result_round: { type: Number, default: 1 },
     // Track if results process has started
     results_started: { type: Boolean, default: false },
+    jd_files: [{
+        filename: { type: String, required: true }, // Stored filename
+        original_name: { type: String, required: true }, // Original filename from user
+        upload_date: { type: Date, default: Date.now },
+        file_size: { type: Number } // File size in bytes
+    }],
+    published_results: [{
+        round_number: { type: Number, required: true },
+        published_date: { type: Date, default: Date.now },
+        student_results: [{
+            student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'students', required: true },
+            status: { type: String, enum: ['Selected', 'Rejected'], required: true }
+        }]
+    }]
 });
 
 // On Delete Cascade when a drive is deleted remove the drive reference from all students' applied_drives

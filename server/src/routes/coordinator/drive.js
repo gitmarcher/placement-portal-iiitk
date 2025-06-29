@@ -8,29 +8,95 @@ const Student  = require('../../models/studentModel');
 const ExcelJS = require('exceljs');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
-router.post('/create', protectCoordinatorAuth, async (req, res) => {
+// Configure multer for JD file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadPath = path.join(__dirname, '../../../JDs');
+        cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+        // Generate unique filename with timestamp
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const filename = `jd-${uniqueSuffix}${path.extname(file.originalname)}`;
+        cb(null, filename);
+    }
+});
+
+// File filter for JD uploads (accept common document formats)
+const fileFilter = (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|txt/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype) || 
+                     file.mimetype === 'application/pdf' ||
+                     file.mimetype === 'application/msword' ||
+                     file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+                     file.mimetype === 'text/plain';
+    
+    if (mimetype && extname) {
+        return cb(null, true);
+    } else {
+        cb(new Error('Only PDF, DOC, DOCX, and TXT files are allowed for JD uploads'));
+    }
+};
+
+const uploadJDs = multer({ 
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: fileFilter
+});
+
+router.post('/create', protectCoordinatorAuth, uploadJDs.array('jd_files', 10), async (req, res) => {
   try {
+    console.log("Received request body:", req.body);
+    console.log("Uploaded files:", req.files);
+
+    // Parse JSON fields from FormData if they exist, otherwise use direct values
+    const parseField = (field) => {
+      if (typeof field === 'string' && (field.startsWith('[') || field.startsWith('{'))) {
+        try {
+          return JSON.parse(field);
+        } catch (e) {
+          return field;
+        }
+      }
+      return field;
+    };
+
     const {
       drive_name,
       company_name,
       company_logo,
       about,
       type_of_role,
-      location,
       ctc,
       duration,
       number_of_positions,
       deadline,
-      drive_date,
-      rounds,
-      criteria,
-      required_details, // Ensure this is included
-      custom_required_details, // New: Custom required details
-      custom_questions, // New: Custom questions
+      drive_date
     } = req.body;
 
-    console.log("Received request body:", req.body);
+    // Parse complex fields
+    const location = parseField(req.body.location) || [];
+    const rounds = parseField(req.body.rounds) || [];
+    const criteria = parseField(req.body.criteria) || {};
+    const required_details = parseField(req.body.required_details) || [];
+    const custom_required_details = parseField(req.body.custom_required_details) || [];
+    const custom_questions = parseField(req.body.custom_questions) || [];
+
+    // Process uploaded JD files
+    const jdFiles = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        jdFiles.push({
+          filename: file.filename,
+          original_name: file.originalname,
+          file_size: file.size,
+          upload_date: new Date()
+        });
+      }
+    }
 
     const newDrive = new Drive({
       drive_name,
@@ -46,20 +112,37 @@ router.post('/create', protectCoordinatorAuth, async (req, res) => {
       drive_date,
       rounds,
       criteria,
-      required_details, // Add this field
-      custom_required_details: custom_required_details || [], // Add custom required details
-      custom_questions: custom_questions || [], // Add custom questions
+      required_details,
+      custom_required_details,
+      custom_questions,
+      jd_files: jdFiles,
       coordinator: req.user.id,
-      isActive: true // Default to active
+      isActive: true
     });
 
     console.log("Saving new drive:", newDrive);
     await newDrive.save();
     console.log("Drive saved successfully:", newDrive);
 
-    res.status(201).json({ message: "Drive created successfully", drive: newDrive });
+    res.status(201).json({ 
+      message: "Drive created successfully", 
+      drive: newDrive,
+      uploaded_jd_files: jdFiles.length
+    });
   } catch (error) {
     console.error("Error creating drive:", error);
+    
+    // Clean up uploaded files if drive creation fails
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (unlinkError) {
+          console.error("Error deleting uploaded file:", unlinkError);
+        }
+      }
+    }
+    
     if (error.code === 11000) {
       return res.status(400).json({
         error: `A drive with the name "${req.body.drive_name}" already exists`,
@@ -876,6 +959,44 @@ router.post('/publish-results/:driveId/:roundNumber', protectCoordinatorAuth, as
     } catch (error) {
         console.error('Error publishing results:', error);
         res.status(500).json({ error: 'Failed to publish results' });
+    }
+});
+
+// Download JD file endpoint (accessible to both coordinators and students)
+router.get('/download-jd/:driveId/:filename', async (req, res) => {
+    try {
+        const { driveId, filename } = req.params;
+        
+        // Verify the drive exists and the file belongs to it
+        const drive = await Drive.findById(driveId);
+        if (!drive) {
+            return res.status(404).json({ message: 'Drive not found' });
+        }
+        
+        // Check if the file exists in the drive's JD files
+        const jdFile = drive.jd_files.find(file => file.filename === filename);
+        if (!jdFile) {
+            return res.status(404).json({ message: 'JD file not found' });
+        }
+        
+        // Construct file path
+        const filePath = path.join(__dirname, '../../../JDs', filename);
+        
+        // Check if file exists on disk
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ message: 'File not found on server' });
+        }
+        
+        // Set appropriate headers for file download
+        res.setHeader('Content-Disposition', `attachment; filename="${jdFile.original_name}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+        
+        // Send the file
+        res.sendFile(filePath);
+        
+    } catch (error) {
+        console.error('Error downloading JD file:', error);
+        res.status(500).json({ error: 'Failed to download file' });
     }
 });
 

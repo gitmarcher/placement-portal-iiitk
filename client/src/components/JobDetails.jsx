@@ -75,6 +75,69 @@ export default function AboutWork({ details, studentInfo }) {
             <div className="p-6">{renderHTMLContent(details.about)}</div>
           </div>
 
+          {/* JD Files Section */}
+          {details.jd_files && details.jd_files.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg">
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Job Description Files
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Download detailed job descriptions and requirements
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="space-y-3">
+                  {details.jd_files.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">
+                          {file.original_name.toLowerCase().includes(".pdf")
+                            ? "📄"
+                            : file.original_name.toLowerCase().includes(".doc")
+                            ? "📝"
+                            : "📃"}
+                        </span>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {file.original_name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {file.file_size
+                              ? `${(file.file_size / 1024 / 1024).toFixed(
+                                  2
+                                )} MB`
+                              : "Size unknown"}{" "}
+                            • Uploaded{" "}
+                            {new Date(file.upload_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const backendUrl =
+                            import.meta.env.VITE_BACKEND_URL ||
+                            "http://localhost:8000/api";
+                          window.open(
+                            `${backendUrl}/coordinator/drive/download-jd/${details._id}/${file.filename}`,
+                            "_blank"
+                          );
+                        }}
+                        className="bg-[#EB3030] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#D00000] transition-colors flex items-center space-x-2"
+                      >
+                        <span>📥</span>
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Selection Process Section */}
           {details.rounds && details.rounds.length > 0 && (
             <div className="bg-white border border-gray-200 rounded-lg">
