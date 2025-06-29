@@ -9,6 +9,10 @@ const Navbar = () => {
   const { studentCreds, updateStudentCreds } = useContext(StudentCredContext);
   const navigate = useNavigate();
 
+  // Check if user is authenticated
+  const isAuthenticated =
+    studentCreds?.creds && studentCreds?.username && studentCreds?.type;
+
   // Get dashboard URL based on user role
   const getDashboardUrl = () => {
     const userRole = studentCreds?.type;
@@ -48,25 +52,30 @@ const Navbar = () => {
     <nav className="py-6 px-6 shadow-md bg-white">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
-          {/* Back button */}
-          <Link to={getDashboardUrl()} className="text-gray-500 mr-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </Link>
+          {/* Back button - only show if authenticated */}
+          {isAuthenticated && (
+            <Link to={getDashboardUrl()} className="text-gray-500 mr-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </Link>
+          )}
 
           {/* Logo and title */}
-          <Link to={getDashboardUrl()} className="flex items-center gap-x-2">
+          <Link
+            to={isAuthenticated ? getDashboardUrl() : "/login"}
+            className="flex items-center gap-x-2"
+          >
             <img src={logo} alt="Logo" className="h-8" />
             <h1 className="text-gray-900 font-medium text-lg">
               Placement Portal
@@ -74,12 +83,34 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Right side navigation buttons */}
-        <div className="flex items-center space-x-4">
-          {!isCoordinator && (
+        {/* Right side navigation buttons - only show if authenticated */}
+        {isAuthenticated && (
+          <div className="flex items-center space-x-4">
+            {!isCoordinator && (
+              <button
+                onClick={handleProfileClick}
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-coral-red hover:bg-gray-50 rounded-lg transition-all duration-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span className="hidden sm:inline">Profile</span>
+              </button>
+            )}
             <button
-              onClick={handleProfileClick}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-coral-red hover:bg-gray-50 rounded-lg transition-all duration-200"
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 text-white bg-coral-red hover:bg-coral-red/90 rounded-lg transition-all duration-200"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -92,34 +123,14 @@ const Navbar = () => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16,17 21,12 16,7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
               </svg>
-              <span className="hidden sm:inline">Profile</span>
+              <span className="hidden sm:inline">Log out</span>
             </button>
-          )}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-white bg-coral-red hover:bg-coral-red/90 rounded-lg transition-all duration-200"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16,17 21,12 16,7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            <span className="hidden sm:inline">Log out</span>
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </nav>
   );
