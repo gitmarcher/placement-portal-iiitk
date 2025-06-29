@@ -6,6 +6,8 @@ const User = require('../../models/studentModel');
 const StudentCred = require('../../models/studentCred');
 const Student  = require('../../models/studentModel');
 const ExcelJS = require('exceljs');
+const fs = require('fs');
+const path = require('path');
 
 router.post('/create', protectCoordinatorAuth, async (req, res) => {
   try {
@@ -215,7 +217,7 @@ router.get('/applications/:driveId', protectCoordinatorAuth, async (req, res) =>
     }
 });
 
-// Download applicants list as CSV file (opens in Excel)
+// Download applicants list as Excel file using template
 router.get('/download-applicants/:driveId', protectCoordinatorAuth, async (req, res) => {
     try {
         const drive = await Drive.findById(req.params.driveId);
@@ -223,6 +225,22 @@ router.get('/download-applicants/:driveId', protectCoordinatorAuth, async (req, 
         if (!drive) {
             return res.status(404).json({ message: 'Drive not found' });
         }
+
+        // Path to template file
+        const templatePath = path.join(__dirname, '../../../templates/template.xlsx');
+        
+        // Check if template exists
+        if (!fs.existsSync(templatePath)) {
+            return res.status(500).json({ error: 'Excel template not found' });
+        }
+
+        // Create a new workbook from template
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(templatePath);
+        const worksheet = workbook.getWorksheet('Applicants');
+
+        // Clear existing data (keep only headers row)
+        worksheet.spliceRows(2, worksheet.rowCount - 1);
 
         // Build dynamic headers based on custom fields
         let headers = ['Name', 'Roll No', 'Email', 'Phone', 'CGPA', 'Resume Link', 'Applied Date'];
@@ -240,10 +258,20 @@ router.get('/download-applicants/:driveId', protectCoordinatorAuth, async (req, 
                 headers.push(question.question_text);
             });
         }
+
+        // Update headers in the worksheet
+        worksheet.getRow(1).values = headers;
         
-        let csvContent = headers.join(',') + '\n';
+        // Style the header row
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE6E6E6' }
+        };
 
         // Add data rows
+        let rowIndex = 2;
         for (const applicant of drive.applied_students) {
             try {
                 const student = await Student.findById(applicant.student);
@@ -251,20 +279,20 @@ router.get('/download-applicants/:driveId', protectCoordinatorAuth, async (req, 
                     let rowData = [];
                     
                     // Standard fields
-                    rowData.push(`"${(student.name || 'N/A').replace(/"/g, '""')}"`);
-                    rowData.push(`"${student.roll_no || 'N/A'}"`);
-                    rowData.push(`"${student.email_id || 'N/A'}"`);
-                    rowData.push(`"${applicant.phone || (student.phone_no && student.phone_no.length > 0 ? student.phone_no[0] : '') || 'N/A'}"`);
-                    rowData.push(`"${student.academics?.cgpa || 'N/A'}"`);
-                    rowData.push(`"${(applicant.resumeLink || student.resume_link || 'N/A').replace(/"/g, '""')}"`);
-                    rowData.push(`"${applicant.applicationTimestamp ? new Date(applicant.applicationTimestamp).toLocaleDateString() : 'N/A'}"`);
+                    rowData.push(student.name || 'N/A');
+                    rowData.push(student.roll_no || 'N/A');
+                    rowData.push(student.email_id || 'N/A');
+                    rowData.push(applicant.phone || (student.phone_no && student.phone_no.length > 0 ? student.phone_no[0] : '') || 'N/A');
+                    rowData.push(student.academics?.cgpa || 'N/A');
+                    rowData.push(applicant.resumeLink || student.resume_link || 'N/A');
+                    rowData.push(applicant.applicationTimestamp ? new Date(applicant.applicationTimestamp).toLocaleDateString() : 'N/A');
                     
                     // Custom required details
                     if (drive.custom_required_details && drive.custom_required_details.length > 0) {
                         drive.custom_required_details.forEach(field => {
                             const response = applicant.custom_field_responses?.find(r => r.field_id === field.field_id);
                             const value = response ? response.field_value : 'N/A';
-                            rowData.push(`"${String(value || 'N/A').replace(/"/g, '""')}"`);
+                            rowData.push(value || 'N/A');
                         });
                     }
                     
@@ -280,33 +308,58 @@ router.get('/download-applicants/:driveId', protectCoordinatorAuth, async (req, 
                                     value = response.answer;
                                 }
                             }
-                            rowData.push(`"${String(value || 'N/A').replace(/"/g, '""')}"`);
+                            rowData.push(value || 'N/A');
                         });
                     }
                     
-                    csvContent += rowData.join(',') + '\n';
+                    // Add row to worksheet
+                    worksheet.addRow(rowData);
+                    rowIndex++;
                 }
             } catch (err) {
-                console.error('Error populating student for CSV:', err);
+                console.error('Error populating student for Excel:', err);
             }
         }
 
-        // Clean filename: replace special characters and spaces
+        // Auto-fit columns
+        worksheet.columns.forEach(column => {
+            column.width = 15;
+        });
+
+        // Generate unique filename
         const cleanDriveName = drive.drive_name.replace(/[^a-zA-Z0-9]/g, '_');
         const timestamp = new Date().toISOString().split('T')[0];
-        const filename = `${cleanDriveName}_Applicants_${timestamp}.csv`;
+        const filename = `${cleanDriveName}_Applicants_${timestamp}.xlsx`;
+        const outputPath = path.join(__dirname, '../../../templates', filename);
+
+        // Save the populated file
+        await workbook.xlsx.writeFile(outputPath);
         
-        // Set response headers for CSV download
+        // Set response headers for Excel download
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Cache-Control', 'no-cache');
         
-        // Send the CSV file
-        res.send(csvContent);
+        // Send the file
+        res.sendFile(outputPath, (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(500).json({ error: 'Failed to send Excel file' });
+            }
+            
+            // Delete the file after sending
+            fs.unlink(outputPath, (unlinkErr) => {
+                if (unlinkErr) {
+                    console.error('Error deleting temporary file:', unlinkErr);
+                } else {
+                    console.log('Temporary file deleted successfully:', filename);
+                }
+            });
+        });
         
     } catch (error) {
-        console.error('Error generating CSV file:', error.message);
-        res.status(500).json({ error: 'Failed to generate CSV file' });
+        console.error('Error generating Excel file:', error.message);
+        res.status(500).json({ error: 'Failed to generate Excel file' });
     }
 });
 
