@@ -10,6 +10,20 @@ const api = axios.create({
   withCredentials: true, // Enable sending/receiving cookies
 });
 
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export default api;
 
 // Results Management API endpoints

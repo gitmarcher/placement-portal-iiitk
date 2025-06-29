@@ -44,11 +44,20 @@ const login = async (req, res) => {
         // Generate token with username and role
         generateTokenAndSetCookie(user._id.toString(), user.username, userType, res);
 
+        // Also send token in response for Authorization header method
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign({ 
+            userId: user._id.toString(),
+            username: user.username,
+            role: userType
+        }, process.env.JWT_SECRET, { expiresIn: "15d" });
+
         if (!profile) {
             return res.status(201).json({
                 _id: user._id,
                 username: user.username,
                 userType,
+                token: token, // Include token in response
                 message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} profile incomplete, please complete your registration`,
             });
         }
@@ -57,6 +66,7 @@ const login = async (req, res) => {
             _id: user._id,
             username: user.username,
             userType,
+            token: token, // Include token in response
             message: "User logged in successfully",
         });
 

@@ -8,12 +8,18 @@ const generateTokenAndSetCookie = (userId, username, role, res) => {
             role  // Add role to JWT payload
         }, process.env.JWT_SECRET, { expiresIn: "15d" });
         
-        res.cookie('jwt', token, {
+        const cookieOptions = {
             maxAge: 15*24*60*60*1000, // 15 days to match token expiry
             httpOnly: true,
-            sameSite: "strict",
-            secure: process.env.NODE_ENV === "production"
-        });
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // Allow cross-origin for production
+            secure: process.env.NODE_ENV === "production" // Require HTTPS in production
+        };
+
+        // Add debugging
+        console.log('Setting cookie with options:', cookieOptions);
+        console.log('NODE_ENV:', process.env.NODE_ENV);
+        
+        res.cookie('jwt', token, cookieOptions);
 
     }
     catch (error) {

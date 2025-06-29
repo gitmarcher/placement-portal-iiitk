@@ -12,6 +12,11 @@ export const login = async (email, password, userType) => {
         
         const data = response.data;
         
+        // Store token in localStorage if provided
+        if (data.token) {
+            localStorage.setItem('authToken', data.token);
+        }
+        
         // Handle profile incomplete case (status 201)
         if (response.status === 201) {
             return {
@@ -76,12 +81,18 @@ export const logout = async () => {
         const response = await api.post("/auth/logout");
         const data = response.data;
         
+        // Clear token from localStorage
+        localStorage.removeItem('authToken');
+        
         return {
             success: response.status === 200,
             message: data.message || "Logged out successfully"
         };
     } catch (error) {
         console.error("Logout error:", error);
+        
+        // Clear token even if logout request fails
+        localStorage.removeItem('authToken');
         
         if (error.response) {
             const { status, data } = error.response;
