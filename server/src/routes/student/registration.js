@@ -41,7 +41,6 @@ router.post('/complete-profile', protectRoute, async (req, res) => {
       name: req.body.name,
       email_id: req.body.email_id,
       stream: req.body.stream,
-      batch: req.body.batch,
       phone_no: req.body.phone_no,
       gender: req.body.gender,
       work_experience: req.body.work_experience,
