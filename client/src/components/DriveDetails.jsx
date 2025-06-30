@@ -202,9 +202,7 @@ const DriveDetails = () => {
         method: "POST",
         body: formDataToSend,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem(
-            "coordinatorAuthToken"
-          )}`
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`
         }
       });
 
