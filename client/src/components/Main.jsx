@@ -263,38 +263,38 @@ const Main = ({ searchTerm = "", filters = {} }) => {
               .includes(filters.locationSearch.toLowerCase())
           ));
 
-      // Batch filter (based on eligible_batches in criteria)
-      const matchesBatch = (() => {
-        // If no batch filter applied, show all
+      // Graduation year filter (based on graduation_year in criteria)
+      const matchesGraduationYear = (() => {
+        // If no graduation year filter applied, show all
         if (!filters.batch || filters.batch.trim() === "") {
           return true;
         }
 
-        // Parse comma-separated batch years from filter input
-        const filterBatches = filters.batch
+        // Parse comma-separated graduation years from filter input
+        const filterYears = filters.batch
           .split(",")
-          .map((batch) => parseInt(batch.trim(), 10))
-          .filter((batch) => !isNaN(batch));
+          .map((year) => parseInt(year.trim(), 10))
+          .filter((year) => !isNaN(year));
 
-        // If no valid batch numbers in filter, show all
-        if (filterBatches.length === 0) {
+        // If no valid graduation years in filter, show all
+        if (filterYears.length === 0) {
           return true;
         }
 
-        // Check if drive has eligible_batches criteria
+        // Check if drive has graduation_year criteria
         if (
           drive.criteria &&
-          drive.criteria.eligible_batches &&
-          Array.isArray(drive.criteria.eligible_batches) &&
-          drive.criteria.eligible_batches.length > 0
+          drive.criteria.graduation_year &&
+          Array.isArray(drive.criteria.graduation_year) &&
+          drive.criteria.graduation_year.length > 0
         ) {
-          // Check if any filter batch matches any eligible batch
-          return filterBatches.some((filterBatch) =>
-            drive.criteria.eligible_batches.includes(filterBatch)
+          // Check if any filter year matches any eligible graduation year
+          return filterYears.some((filterYear) =>
+            drive.criteria.graduation_year.includes(filterYear)
           );
         }
 
-        // If no eligible_batches criteria set, show for all batches
+        // If no graduation_year criteria set, show for all graduation years
         return true;
       })();
 
@@ -304,7 +304,7 @@ const Main = ({ searchTerm = "", filters = {} }) => {
         matchesStatus &&
         matchesType &&
         matchesLocation &&
-        matchesBatch
+        matchesGraduationYear
       );
     });
   };

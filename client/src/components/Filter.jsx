@@ -213,18 +213,18 @@ const Filter = ({
             </div>
           </div>
 
-          {/* Batch Filter */}
-          <div className="Batch w-full max-w-md">
+          {/* Graduation Year Filter */}
+          <div className="GraduationYear w-full max-w-md">
             <div className="relative flex items-center w-full mx-auto md:flex">
               <input
                 type="text"
-                placeholder="Filter by batch (e.g., 2022,2023,2024)"
+                placeholder="Filter by graduation year (e.g., 2022,2023,2024)"
                 value={batch}
                 onChange={(e) => setBatch(e.target.value)}
                 className="w-full p-2 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coral-red"
               />
               <div className="absolute -top-3 left-2 bg-white px-2 text-sm text-black font-medium">
-                Batch
+                Graduation Year
                 {batch && <span className="ml-1 text-coral-red">✓</span>}
               </div>
             </div>
@@ -273,7 +273,7 @@ const Filter = ({
                 )}
                 {batch && (
                   <span className="bg-orange-500 text-white px-2 py-1 rounded">
-                    Batch: {batch}
+                    Graduation Year: {batch}
                   </span>
                 )}
               </div>

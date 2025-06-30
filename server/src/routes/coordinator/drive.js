@@ -1147,27 +1147,27 @@ router.get('/download-jd/:driveId/:filename', async (req, res) => {
 
 // Placement Tracker APIs
 
-// Get placement statistics by batch
+// Get placement statistics by graduation year
 router.get('/placement/statistics/:batch', protectCoordinatorAuth, async (req, res) => {
     try {
         const { batch } = req.params;
-        const batchYear = parseInt(batch);
+        const graduationYear = parseInt(batch);
 
-        // Get all students in the batch
-        const allStudents = await Student.find({ batch: batchYear }).populate('creds');
+        // Get all students with the graduation year
+        const allStudents = await Student.find({ 'academics.graduation_year': graduationYear }).populate('creds');
         
         // Get all drives with placed students
         const drives = await Drive.find({
             'placed_students.0': { $exists: true }
         }).populate({
             path: 'placed_students.student_id',
-            match: { batch: batchYear },
-            select: 'name email batch stream'
+            match: { 'academics.graduation_year': graduationYear },
+            select: 'name email academics.graduation_year stream'
         });
 
-        // Filter out drives that don't have students from this batch
+        // Filter out drives that don't have students from this graduation year
         const relevantDrives = drives.filter(drive => 
-            drive.placed_students.some(placement => placement.student_id && placement.student_id.batch === batchYear)
+            drive.placed_students.some(placement => placement.student_id && placement.student_id.academics.graduation_year === graduationYear)
         );
 
         // Get placed students
@@ -1179,7 +1179,7 @@ router.get('/placement/statistics/:batch', protectCoordinatorAuth, async (req, r
 
         relevantDrives.forEach(drive => {
             drive.placed_students.forEach(placement => {
-                if (placement.student_id && placement.student_id.batch === batchYear) {
+                if (placement.student_id && placement.student_id.academics.graduation_year === graduationYear) {
                     placedStudentIds.add(placement.student_id._id.toString());
                     placements.push({
                         student: placement.student_id,
@@ -1223,7 +1223,7 @@ router.get('/placement/statistics/:batch', protectCoordinatorAuth, async (req, r
             stipendValues.sort((a, b) => a - b)[Math.floor(stipendValues.length / 2)].toFixed(2) : 0;
 
         res.json({
-            batch: batchYear,
+            batch: graduationYear,
             totalStudents,
             placedStudents,
             placementPercentage: totalStudents > 0 ? ((placedStudents / totalStudents) * 100).toFixed(2) : 0,
@@ -1241,16 +1241,16 @@ router.get('/placement/statistics/:batch', protectCoordinatorAuth, async (req, r
     }
 });
 
-// Get detailed student placement data by batch
+// Get detailed student placement data by graduation year
 router.get('/placement/students/:batch', protectCoordinatorAuth, async (req, res) => {
     try {
         const { batch } = req.params;
         const { search = '' } = req.query;
-        const batchYear = parseInt(batch);
+        const graduationYear = parseInt(batch);
 
-        // Get all students in the batch
+        // Get all students with the graduation year
         const students = await Student.find({ 
-            batch: batchYear,
+            'academics.graduation_year': graduationYear,
             ...(search && {
                 $or: [
                     { name: { $regex: search, $options: 'i' } },
@@ -1260,12 +1260,12 @@ router.get('/placement/students/:batch', protectCoordinatorAuth, async (req, res
             })
         }).populate('creds');
 
-        // Get all drives with placed students from this batch
+        // Get all drives with placed students from this graduation year
         const drives = await Drive.find({
             'placed_students.0': { $exists: true }
         }).populate({
             path: 'placed_students.student_id',
-            match: { batch: batchYear }
+            match: { 'academics.graduation_year': graduationYear }
         });
 
         // Create a map of student placements
@@ -1273,7 +1273,7 @@ router.get('/placement/students/:batch', protectCoordinatorAuth, async (req, res
         
         drives.forEach(drive => {
             drive.placed_students.forEach(placement => {
-                if (placement.student_id && placement.student_id.batch === batchYear) {
+                if (placement.student_id && placement.student_id.academics.graduation_year === graduationYear) {
                     studentPlacements.set(placement.student_id._id.toString(), {
                         company: drive.company_name,
                         role_type: placement.offer_details.role_type,
@@ -1298,7 +1298,7 @@ router.get('/placement/students/:batch', protectCoordinatorAuth, async (req, res
         }));
 
         res.json({
-            batch: batchYear,
+            batch: graduationYear,
             students: studentDetails,
             totalStudents: studentDetails.length,
             placedStudents: studentDetails.filter(s => s.isPlaced).length
@@ -1309,16 +1309,16 @@ router.get('/placement/students/:batch', protectCoordinatorAuth, async (req, res
     }
 });
 
-// Get available batches
+// Get available graduation years
 router.get('/placement/batches', protectCoordinatorAuth, async (req, res) => {
     try {
-        const batches = await Student.distinct('batch');
-        const sortedBatches = batches.sort((a, b) => b - a); // Latest first
+        const graduationYears = await Student.distinct('academics.graduation_year');
+        const sortedYears = graduationYears.filter(year => year != null).sort((a, b) => b - a); // Latest first
         
-        res.json({ batches: sortedBatches });
+        res.json({ batches: sortedYears });
     } catch (error) {
-        console.error('Error fetching available batches:', error);
-        res.status(500).json({ error: 'Failed to fetch available batches' });
+        console.error('Error fetching available graduation years:', error);
+        res.status(500).json({ error: 'Failed to fetch available graduation years' });
     }
 });
 

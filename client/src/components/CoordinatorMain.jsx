@@ -129,9 +129,9 @@ const CoordinatorMain = ({ searchTerm, filters = {} }) => {
               .includes(filters.locationSearch.toLowerCase())
           ));
 
-      // Batch filter (based on graduation year in criteria)
-      const matchesBatch = (() => {
-        // If no batch filter is set or it's not a valid string, show all drives
+      // Graduation year filter (based on graduation year in criteria)
+      const matchesGraduationYear = (() => {
+        // If no graduation year filter is set or it's not a valid string, show all drives
         if (
           !filters.batch ||
           typeof filters.batch !== "string" ||
@@ -140,16 +140,16 @@ const CoordinatorMain = ({ searchTerm, filters = {} }) => {
           return true;
         }
 
-        // Parse batch filter (comma-separated string to array)
-        const batchArray = filters.batch
+        // Parse graduation year filter (comma-separated string to array)
+        const graduationYearArray = filters.batch
           .split(",")
           .map((b) => b.trim())
           .filter((b) => b !== "")
           .map((b) => parseInt(b))
           .filter((b) => !isNaN(b));
 
-        // If no valid batches parsed, show all drives
-        if (batchArray.length === 0) {
+        // If no valid graduation years parsed, show all drives
+        if (graduationYearArray.length === 0) {
           return true;
         }
 
@@ -159,12 +159,12 @@ const CoordinatorMain = ({ searchTerm, filters = {} }) => {
           drive.criteria.graduation_year &&
           Array.isArray(drive.criteria.graduation_year)
         ) {
-          return batchArray.some((batch) =>
-            drive.criteria.graduation_year.includes(batch)
+          return graduationYearArray.some((year) =>
+            drive.criteria.graduation_year.includes(year)
           );
         }
 
-        // If no specific graduation year criteria, show for all batches
+        // If no specific graduation year criteria, show for all graduation years
         return true;
       })();
 
@@ -174,7 +174,7 @@ const CoordinatorMain = ({ searchTerm, filters = {} }) => {
         matchesStatus &&
         matchesType &&
         matchesLocation &&
-        matchesBatch
+        matchesGraduationYear
       );
     });
   };

@@ -120,7 +120,7 @@ const PlacementTracker = () => {
               Placement Tracker
             </h2>
             <p className="text-gray-600 text-sm mt-1">
-              Track placement statistics and student details by batch
+              Track placement statistics and student details by graduation year
             </p>
           </div>
 
@@ -130,7 +130,7 @@ const PlacementTracker = () => {
               htmlFor="batch"
               className="text-sm font-medium text-gray-700"
             >
-              Select Batch:
+              Select Graduation Year:
             </label>
             <select
               id="batch"
@@ -138,10 +138,10 @@ const PlacementTracker = () => {
               onChange={(e) => handleBatchChange(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coral-red focus:border-transparent"
             >
-              <option value="">Choose a batch...</option>
+              <option value="">Choose a graduation year...</option>
               {availableBatches.map((batch) => (
                 <option key={batch} value={batch}>
-                  Batch {batch}
+                  {batch}
                 </option>
               ))}
             </select>
@@ -154,7 +154,7 @@ const PlacementTracker = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mx-4 mb-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">
-              Placement Statistics - Batch {statistics.batch}
+              Placement Statistics - Graduation Year {statistics.batch}
             </h3>
             <button
               onClick={handleShowStudentDetails}

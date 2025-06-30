@@ -48,7 +48,7 @@ const FormStep1 = ({ formData, setFormData }) => {
           value={formData.name}
           onChange={handleChange}
           type="text"
-          placeholder="Full Name"
+          placeholder="Full Name (e.g., John Doe)"
         />
       </div>
       <div className="mb-4">
@@ -58,7 +58,7 @@ const FormStep1 = ({ formData, setFormData }) => {
           value={formData.roll_no}
           onChange={handleChange}
           type="text"
-          placeholder="Roll Number (e.g., 2022BCS0082)"
+          placeholder="Roll Number (e.g., 2022BXXXXXX)"
         />
       </div>
       <div className="mb-4">
@@ -68,7 +68,7 @@ const FormStep1 = ({ formData, setFormData }) => {
           value={formData.email_id}
           onChange={handleChange}
           type="email"
-          placeholder="Email (e.g., sameer.khan@example.com)"
+          placeholder="Email (e.g., john.doe@example.com)"
         />
       </div>
       <div className="mb-4">
@@ -92,13 +92,21 @@ const FormStep1 = ({ formData, setFormData }) => {
       <div className="mb-4">
         <input
           className="appearance-none border-b-2 border-gray-300 w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-blue-500"
-          name="batch"
-          value={formData.batch}
-          onChange={handleChange}
+          name="academics.graduation_year"
+          value={formData.academics?.graduation_year || ""}
+          onChange={(e) => {
+            setFormData({
+              ...formData,
+              academics: {
+                ...formData.academics,
+                graduation_year: parseInt(e.target.value) || ""
+              }
+            });
+          }}
           type="number"
           min="2020"
           max="2030"
-          placeholder="Batch Year (e.g., 2022)"
+          placeholder="Graduation Year (e.g., 2024)"
         />
       </div>
       <div className="mb-4">
