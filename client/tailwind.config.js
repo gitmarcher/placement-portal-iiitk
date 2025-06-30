@@ -39,9 +39,13 @@ export default {
        
       },
       screens: {
+        "xs": "475px",
+        "custom": "768px",
         "wide": "1440px"
       }
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }

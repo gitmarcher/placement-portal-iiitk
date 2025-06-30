@@ -1,59 +1,82 @@
 import React, { useState } from "react";
 import { HiOutlineUserCircle } from "react-icons/hi2";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
-import { toast } from "react-toastify";
-import Toast from "./Toast";
+import { FaTrash } from "react-icons/fa";
 
-const ExperienceCard = ({ details, user, onDelete }) => {
+const ExperienceCard = ({ experience, userType, onLike, onDelete }) => {
   const [isLiked, setIsLiked] = useState(false);
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "Unknown date";
+
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
 
   const handleLikeClick = () => {
     setIsLiked((prev) => !prev);
+    if (onLike) onLike();
   };
 
-  const handleDelete = () => {
-    if (typeof onDelete === "function") {
-      onDelete(details.id);
-      toast.error("Experience deleted.");
-    } else {
-      console.error("onDelete is not a function");
-    }
+  const handleDeleteClick = () => {
+    if (onDelete) onDelete();
   };
 
   return (
-    <div id={details.id} className="w-full pr-16 font-ubuntu">
-      <Toast />
-      <div className="mr-auto flex gap-3 mx-12 w-full border-2 border-solid p-7 rounded-xl mt-2 mb-2">
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-4">
-            <div className="text-gray-400">
-              <HiOutlineUserCircle size={45} />
-            </div>
+    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="text-gray-400 mt-1">
+          <HiOutlineUserCircle size={40} />
+        </div>
+
+        <div className="flex-1">
+          <div className="flex justify-between items-start">
             <div>
-              <h2
-                className="font-medium text-base"
-                style={{ color: "rgba(0, 0, 0, 0.71)" }}
-              >
-                {details.name}
-              </h2>
-              <h6 className="text-gray-400 text-sm">{details.date}</h6>
+              <h3 className="font-medium text-gray-800">
+                {experience.studentName || "Anonymous"}
+              </h3>
+              <p className="text-gray-500 text-sm">
+                {formatDate(experience.timestamp)}
+              </p>
             </div>
+
+            {userType === "coordinator" && (
+              <button
+                onClick={handleDeleteClick}
+                className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                title="Delete experience"
+              >
+                <FaTrash size={16} />
+              </button>
+            )}
           </div>
 
-          <p className="text-gray-500 text-sm">{details.content}</p>
-          {user === "coordinator" ? (
-            <button className="self-start" onClick={handleDelete}>
-              <h3 className="text-custom-red text-sm">Delete Experience</h3>
-            </button>
-          ) : (
-            <button onClick={handleLikeClick}>
+          <div className="mt-3">
+            <p className="text-gray-700">{experience.comment}</p>
+          </div>
+
+          <div className="mt-4 flex items-center">
+            <button
+              onClick={handleLikeClick}
+              className="flex items-center gap-1 text-gray-500 hover:text-coral-red transition-colors"
+            >
               {isLiked ? (
-                <AiFillHeart size={25} className="text-coral-red" />
+                <AiFillHeart size={18} className="text-coral-red" />
               ) : (
-                <AiOutlineHeart size={25} />
+                <AiOutlineHeart size={18} />
               )}
+              <span className="text-sm font-medium">
+                {experience.likes || 0}
+              </span>
             </button>
-          )}
+          </div>
         </div>
       </div>
     </div>

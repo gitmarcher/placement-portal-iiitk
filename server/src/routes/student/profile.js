@@ -6,11 +6,10 @@ const StudentCred = require('../../models/studentCred');
 // fetch userinfo
 router.get('/', protectAuth, async (req, res) => {
     try {
-        const student = await Student.findOne({ creds: req.user.creds._id });
+        console.log("User ID from req.user:", req.user._id); // Updated debug log
+        const student = await Student.findOne({ creds: req.user._id }); // Updated to use req.user._id
 
-        
-
-        console.log(student);
+        console.log("Student found:", student);
         if (!student) {
             return res.status(404).send('Student not found');
         }
@@ -27,7 +26,10 @@ router.get('/', protectAuth, async (req, res) => {
             digital_locker: student.digital_locker,
             address: student.address,
             academics: student.academics,
-            applied_drives: student.applied_drives
+            applied_drives: student.applied_drives,
+            resume_link: student.resume_link,
+            linkedin_profile: student.linkedin_profile,
+            github_profile: student.github_profile
         });
     } catch (error) {
         console.error('Error fetching student:', error);
@@ -52,18 +54,21 @@ router.put('/', protectAuth, async (req, res) => {
             // applied_drives: req.body.applied_drives
         };
 
-        // remove undefined or null fields
-        Object.keys(updateData).forEach(key => updateData[key] === undefined || updateData[key] === null && delete updateData[key]);
-        console.log(updateData);    
-        const student = await Student.findOneAndUpdate({ creds: req.user.creds._id }, updateData, { new: true });
-        
+        // Remove undefined or null fields
+        Object.keys(updateData).forEach(key => 
+            (updateData[key] === undefined || updateData[key] === null) && delete updateData[key]
+        );
+        console.log("Update data:", updateData);    
 
+        const student = await Student.findOneAndUpdate(
+            { creds: req.user._id }, // Updated to use req.user._id
+            updateData,
+            { new: true }
+        );
 
-        // const student = await Student.findByIdAndUpdate(req.user.id, );
-
-        // if (!student) {
-        //     return res.status(404).send('Student not found');
-        // }
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found' });
+        }
 
         res.json({
             message: 'Profile updated successfully',

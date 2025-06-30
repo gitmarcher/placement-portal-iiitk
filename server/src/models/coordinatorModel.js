@@ -12,8 +12,8 @@ const coordinator = new mongoose.Schema({
     creds: { type: mongoose.Schema.Types.ObjectId, ref: 'CoordinatorCred', required: true }, 
     name: { type: String, required: true },
     email_id: { type: String, required: true, unique: true, match: /\S+@\S+\.\S+/ },
-    phone_no: { type: String, required: false, minlength: 10, maxlength: 15 },
-    company_name: { type: String, required: true },
+    // phone_no: { type: String, required: false, minlength: 10, maxlength: 15 },
+    // company_name: { type: String, required: true },
     
 });
 

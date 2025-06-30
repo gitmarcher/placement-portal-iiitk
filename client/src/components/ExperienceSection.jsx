@@ -1,111 +1,187 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useContext } from "react";
 import ExperienceCard from "./ExperienceCard";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toastService } from "./Toast";
+import axios from "axios";
+import { StudentCredContext } from "../contexts/StudentCredContext";
+import { useStudentDetails } from "../contexts/StudentDetailsContext";
 
-export default function ExperienceSection({ user, arrayExp }) {
-  const [textAreaInput, handleTextAreaInput] = useState("");
-  const [addExperienceClicked, handleAddExperienceClicked] = useState(false);
-  const experienceTemplate = {
-    id: 1,
-    name: "Name",
-    date: "date",
-    content: "New Experience Content"
-  };
-  const [experiences, setExperiences] = useState([
-    {
-      id: 0,
-      name: "Name",
-      date: "date",
-      content:
-        " Lorem ipsum dolor sit amet, consectetur adipisci elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur. Quis aute iure reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint obcaecat cupiditat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-    }
-  ]);
-  const [expArray, setExpArray] = useState(arrayExp);
-  useEffect(() => {
-    // console.log(addExperienceClicked)
-  }, [addExperienceClicked, textAreaInput]);
+export default function ExperienceSection({
+  driveId,
+  experiences = [],
+  setExperiences
+}) {
+  const [textAreaInput, setTextAreaInput] = useState("");
+  const [addExperienceClicked, setAddExperienceClicked] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddExperience = (e, newExperience = experienceTemplate) => {
-    handleAddExperienceClicked((prev) => !prev);
-    setExperiences((prevExperiences) => [
-      ...prevExperiences,
-      {
-        ...newExperience,
-        id: prevExperiences.length + 1,
+  // Get student context
+  const { studentData } = useStudentDetails();
+  const { studentCreds } = useContext(StudentCredContext);
+  const userType = studentCreds?.creds?.type || "student";
 
-        content: textAreaInput
-      }
-    ]);
-  };
+  // Ensure experiences is always an array
+  const experiencesArray = Array.isArray(experiences) ? experiences : [];
+
+  // Handle text area changes
   const handleTextAreaChange = (e) => {
-    console.log(e.target.value);
-    var val = e.target.value;
-    handleTextAreaInput(e.target.value);
-    console.log(textAreaInput);
+    setTextAreaInput(e.target.value);
   };
 
-  const handleDeleteExperience = (id) => {
-    toast.success("Deleted experience");
+  // Submit a new experience
+  const handleSubmitExperience = async () => {
+    if (!textAreaInput.trim()) {
+      toastService.error("Please enter your experience");
+      return;
+    }
 
-    setExpArray((prevExperiences) =>
-      prevExperiences.filter((exp) => exp.id !== id)
-    );
+    try {
+      setIsSubmitting(true);
+
+      let apiEndpoint = `/api/student/drive/add-experience/${driveId}`;
+
+      // Use the appropriate API endpoint based on user type
+      if (userType === "coordinator") {
+        apiEndpoint = `/api/coordinator/drive/add-experience/${driveId}`;
+      }
+
+      const response = await axios.post(apiEndpoint, {
+        comment: textAreaInput
+      });
+
+      if (response.status === 201) {
+        // Add new experience to the list
+        setExperiences([...experiencesArray, response.data.experience]);
+        toastService.success("Experience shared successfully");
+        setTextAreaInput("");
+        setAddExperienceClicked(false);
+      }
+    } catch (error) {
+      console.error("Error sharing experience:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data ||
+        "Failed to share your experience";
+      toastService.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  console.log(expArray);
+  // Like an experience
+  const handleLikeExperience = async (experienceId) => {
+    try {
+      const response = await axios.post(
+        `/api/student/drive/like-experience/${driveId}/${experienceId}`
+      );
+
+      if (response.status === 200) {
+        // Update experience likes in the UI
+        const updatedExperiences = experiencesArray.map((exp) =>
+          exp._id === experienceId
+            ? { ...exp, likes: response.data.likes }
+            : exp
+        );
+
+        setExperiences(updatedExperiences);
+      }
+    } catch (error) {
+      console.error("Error liking experience:", error);
+      toastService.error("Failed to like the experience");
+    }
+  };
+
+  // Delete an experience (coordinator only)
+  const handleDeleteExperience = async (experienceId) => {
+    if (userType !== "coordinator") {
+      toastService.error("Only coordinators can delete experiences");
+      return;
+    }
+
+    try {
+      const response = await axios.delete(
+        `/api/coordinator/drive/experience/${driveId}/${experienceId}`
+      );
+
+      if (response.status === 200) {
+        // Remove experience from the UI
+        const filteredExperiences = experiencesArray.filter(
+          (exp) => exp._id !== experienceId
+        );
+        setExperiences(filteredExperiences);
+        toastService.success("Experience deleted successfully");
+      }
+    } catch (error) {
+      console.error("Error deleting experience:", error);
+      toastService.error("Failed to delete the experience");
+    }
+  };
 
   return (
-    <div className="w-full ml-[-1.2rem]  flex items-center font-ubuntu mt-18 sm:ml-0">
-      <ToastContainer position="top-center" autoClose={1000} hideProgressBar />
+    <div className="w-full font-ubuntu mt-8 mb-8">
+      <div className="bg-white rounded-lg shadow-sm p-6 mx-4 sm:mx-12">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
+          Student Experiences
+        </h2>
 
-      <div className="   rounded-xl mt-8 mb-2 sm:mx-12">
-        {user === "coordinator" ? (
-          arrayExp && arrayExp.length > 0 ? (
-            expArray.map((exp) => (
-              <ExperienceCard
-                key={exp.id}
-                details={exp}
-                user={user}
-                onDelete={handleDeleteExperience}
-              />
-            ))
-          ) : (
-            "No experiences available"
-          )
-        ) : (
+        {userType === "student" && (
           <>
-            <h1
-              className={`font-medium text-base text-custom-red mb-12 ml-10 cursor-pointer ${
-                addExperienceClicked ? " hidden" : " block"
-              }`}
-              onClick={() => {
-                handleAddExperienceClicked((prev) => !prev);
-              }}
-            >
-              +Add experience
-            </h1>
-            {/* {adding editor for posting experiences.} */}
-            <div className={`${addExperienceClicked ? " block" : " hidden"}`}>
-              <textarea
-                name=""
-                id=""
-                onChange={handleTextAreaChange}
-                className=" rounded-lg w-[85%] ml-12 border-2 resize-none border-black/40 outline-none p-4  sm:ml-12 sm:mx-12 sm:w-[90%] "
-              />
-
+            {!addExperienceClicked ? (
               <button
-                className="mx-12 mt-2 mb-5 button-post"
-                onClick={handleAddExperience}
+                className="inline-block mb-6 text-coral-red hover:text-red-700 font-medium"
+                onClick={() => setAddExperienceClicked(true)}
               >
-                Post
+                + Share Your Experience
               </button>
-            </div>
-
-            {experiences.map((exp) => (
-              <ExperienceCard key={exp.id} details={exp} />
-            ))}
+            ) : (
+              <div className="mb-6">
+                <textarea
+                  placeholder="Share your experience with this drive..."
+                  value={textAreaInput}
+                  onChange={handleTextAreaChange}
+                  className="w-full p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-coral-red focus:border-coral-red"
+                  rows={4}
+                />
+                <div className="flex gap-3 mt-2">
+                  <button
+                    className="px-4 py-2 bg-coral-red text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+                    onClick={handleSubmitExperience}
+                    disabled={isSubmitting || !textAreaInput.trim()}
+                  >
+                    {isSubmitting ? "Posting..." : "Post Experience"}
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                    onClick={() => {
+                      setAddExperienceClicked(false);
+                      setTextAreaInput("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </>
+        )}
+
+        {experiencesArray.length > 0 ? (
+          <div className="space-y-4">
+            {experiencesArray.map((experience) => (
+              <ExperienceCard
+                key={experience._id}
+                experience={experience}
+                userType={userType}
+                onLike={() => handleLikeExperience(experience._id)}
+                onDelete={() => handleDeleteExperience(experience._id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center text-gray-500">
+            <p>
+              No experiences shared yet. Be the first to share your experience!
+            </p>
+          </div>
         )}
       </div>
     </div>

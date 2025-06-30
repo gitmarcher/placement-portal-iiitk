@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { link } = require('../routes/authRoutes');
 
 /*
 Status: Under Development
@@ -30,7 +31,7 @@ const address = new mongoose.Schema({
 
 
 const academics = new mongoose.Schema({
-    cgpa: { type: Number, required: true, min: 0, max: 10 },
+    
     tenth_board_name: { type: String, required: true },
     tenth_percentage: { type: Number, required: true, min: 0, max: 100 },
     tenth_passing_year: { type: Number, required: true, minlength: 4, maxlength: 4 },
@@ -40,7 +41,8 @@ const academics = new mongoose.Schema({
     graduation_degree: { type: String, required: true, default: 'B.Tech', enum: ['B.Tech'] },
     // graduation_percentage: { type: Number, required: true, min: 0, max: 100 },
     graduation_year: { type: Number, required: true, minlength: 4, maxlength: 4 },
-
+    cgpa: { type: Number, required: true, min: 0, max: 10 },
+    backlogs: { type: Number, required: true, min: 0 },
 
     //not sure if needed
     // pg_subject: { type: String, required: false },
@@ -65,12 +67,14 @@ const studentSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email_id: { type: String, required: true, unique: true, match: /\S+@\S+\.\S+/ },
     stream: { type: String, required: true },
-    // batch_year: { type: Number, required: true, minlength: 4, maxlength: 4 },
     phone_no: [{ type: String, required: true, minlength: 10, maxlength: 15 }],
     gender: { type: String, required: true, enum: ['Male', 'Female', 'Other'] },
     work_experience: [{ type: String, required: false }],
     additional_skills: [{ type: String, required: false }],
     digital_locker: { type: String, required: true },
+    resume_link: { type: String, required: true },
+    linkedin_profile: { type: String, required: false },
+    github_profile: { type: String, required: false },
 
     address: { type: address, required: true },                 // nested
     academics: { type: academics, required: true },             // nested

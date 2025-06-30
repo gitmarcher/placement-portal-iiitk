@@ -1,422 +1,309 @@
 import React, { useState } from "react";
-import { EditorState } from "draft-js";
-import { Editor } from "react-draft-wysiwyg";
-import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+import { EditorState, convertToRaw } from "draft-js";
+import draftToHtml from "draftjs-to-html";
+import { useNavigate } from "react-router-dom";
+import { toastService } from "./Toast";
+import addDrive from "../API/addDrive";
+import DriveBasicDetails from "./DriveBasicDetails";
+import AboutWorkSection from "./AboutWorkSection";
+import EligibilitySection from "./EligibilitySection";
+import RoundsSection from "./RoundsSection";
+import RequiredDetailsSection from "./RequiredDetailsSection";
+import CustomRequiredDetailsSection from "./CustomRequiredDetailsSection";
+import CustomQuestionsSection from "./CustomQuestionsSection";
+import JDFilesSection from "./JDFilesSection";
 
 const DriveDetails = () => {
-  // State for Editor
+  const navigate = useNavigate();
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
-
-  // State for form inputs
+  const [jdFiles, setJdFiles] = useState([]);
   const [formData, setFormData] = useState({
-    companyName: "",
-    role: "",
-    startDate: "",
-    endDate: "",
-    employmentType: "internship", // Default value for employment type
+    drive_name: "",
+    company_name: "",
+    company_logo: "",
+    type_of_role: "",
     location: "",
-    duration: "",
+    ctc: "",
     stipend: "",
-    ppoOffered: false,
-    CTC: "",
-    locations: "",
-    minimumCGPA: "",
-    backlogs: "",
-    yearSemester: [],
-    stream: [],
-    requiredData: []
+    duration: "",
+    number_of_positions: "",
+    deadline: "",
+    drive_date: "",
+    rounds: [],
+    criteria: {
+      tenth_percentage: "",
+      twelfth_percentage: "",
+      graduation_degree: "",
+      graduation_year: "",
+      cgpa: "",
+      stream: [],
+      work_experience_count: "",
+      max_backlogs: ""
+    },
+    required_details: [],
+    custom_required_details: [],
+    custom_questions: []
   });
 
-  // Reusable InputField component defined within the same file
-  const InputField = ({ label, type, name, id, className, ...rest }) => {
-    return (
-      <div className="flex items-center mb-4">
-        <label htmlFor={id} className="w-40">
-          {label}
-        </label>
-        <input
-          type={type}
-          name={name}
-          id={id}
-          className={`w-full border-2 border-solid border-gray-300 p-1 rounded-md ${className}`}
-          value={formData[name]} // Bind value to formData
-          onChange={handleChange} // Handle input changes
-          {...rest}
-        />
-      </div>
-    );
-  };
-
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: type === "checkbox" ? checked : value
-    }));
+    const { name, value } = e.target;
+    if (name.startsWith("criteria.")) {
+      const criteriaField = name.split(".")[1];
+      setFormData((prevData) => ({
+        ...prevData,
+        criteria: { ...prevData.criteria, [criteriaField]: value }
+      }));
+    } else {
+      setFormData((prevData) => ({ ...prevData, [name]: value }));
+    }
   };
 
   const handleCheckboxChange = (name, value) => {
     setFormData((prevData) => {
-      const currentValues = prevData[name];
-      if (currentValues.includes(value)) {
-        return {
-          ...prevData,
-          [name]: currentValues.filter((v) => v !== value)
-        };
-      } else {
-        return {
-          ...prevData,
-          [name]: [...currentValues, value]
-        };
-      }
+      const currentValues = prevData.criteria[name] || [];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+      return {
+        ...prevData,
+        criteria: { ...prevData.criteria, [name]: newValues }
+      };
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleRequiredDetailsChange = (value) => {
+    setFormData((prev) => {
+      const current = prev.required_details || [];
+      const newValues = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value];
+      return { ...prev, required_details: newValues };
+    });
+  };
+
+  const handleCustomFieldsChange = (customFields) => {
+    setFormData((prev) => ({
+      ...prev,
+      custom_required_details: customFields
+    }));
+  };
+
+  const handleCustomQuestionsChange = (customQuestions) => {
+    setFormData((prev) => ({
+      ...prev,
+      custom_questions: customQuestions
+    }));
+  };
+
+  const handleRoundChange = (rounds) => {
+    setFormData((prevData) => ({ ...prevData, rounds }));
+  };
+
+  const handleJDFilesChange = (files) => {
+    setJdFiles(files);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted with data: ", formData);
-  };
+    try {
+      // Convert Draft.js content to HTML to preserve formatting
+      const contentState = editorState.getCurrentContent();
+      const rawContentState = convertToRaw(contentState);
+      const aboutHtml = draftToHtml(rawContentState);
 
-  const SectionOne = () => {
-    return (
-      <section className="mt-[2rem] p-2 sm:p-8">
-        <p className="text-xl font-semibold">Drive Details:</p>
-        <div className="flex flex-col  justify-between  sm:flex-row mt-[1rem]">
-          {/* Left form section */}
-          <div className="w-full order-2 sm:w-3/4 mb-4 sm:mb-0">
-            <InputField
-              label="Company Name:"
-              type="text"
-              name="companyName"
-              id="companyName"
-            />
-            <InputField label="Roles:" type="text" name="role" id="role" />
-            <div className="flex flex-col flex-wrap items-center gap-8 sm:flex-row sm:gap-4 mb-4">
-              <div className="flex-1 w-3/8">
-                <InputField
-                  label="Start Date:"
-                  type="date"
-                  name="startDate"
-                  id="startDate"
-                />
-              </div>
-              <div className="flex-1 w-3/8">
-                <InputField
-                  label="End Date:"
-                  type="date"
-                  name="endDate"
-                  id="endDate"
-                />
-              </div>
-            </div>
-          </div>
+      const locationArray = formData.location
+        .split(",")
+        .map((loc) => loc.trim())
+        .filter((loc) => loc);
+      const graduationYearArray = formData.criteria.graduation_year
+        .split(",")
+        .map((year) => parseInt(year.trim(), 10))
+        .filter((year) => !isNaN(year));
+      const streamArray =
+        formData.criteria.stream.length > 0
+          ? formData.criteria.stream
+          : ["ALL"];
 
-          {/* Right section with circular file input */}
-          <div className="relative order-1 mb-4 flex items-center justify-center sm:order-2">
-            <div className="relative rounded-full w-32 h-32 bg-red-100 flex items-center justify-center">
-              <input
-                type="file"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <span className="text-gray-500">Logo</span>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  };
+      // Create FormData for multipart form submission
+      const formDataToSend = new FormData();
 
-  const SectionTwo = () => {
-    return (
-      <section className="p-8">
-        <p className="mt-[2rem] text-xl font-semibold">Employment Type:</p>
-        <div className="mt-[1rem] flex flex-col items-center gap-4 justify-between sm:flex-row">
-          <div>
-            <div className="flex gap-2 items-center mb-4">
-              <p className="text-xl">Internship</p>
-              <input
-                type="radio"
-                name="employmentType"
-                value="internship"
-                checked={formData.employmentType === "internship"}
-                onChange={handleChange}
-                className="w-4 h-4 accent-gray-500 focus:ring-0 focus:ring-offset-0 border-gray-300 rounded cursor-pointer"
-              />
-            </div>
-            <div>
-              <InputField
-                label="Location:"
-                type="text"
-                name="location"
-                id="location"
-                className={"ml-6"}
-              />
-              <InputField
-                label="Duration:"
-                type="text"
-                name="duration"
-                id="duration"
-                className={"ml-6"}
-              />
-              <InputField
-                label="Stipend:"
-                type="text"
-                name="stipend"
-                id="stipend"
-                className={"ml-6"}
-              />
-            </div>
-            <div className="flex gap-4 mt-4 items-center">
-              <p>PPO</p>
-              <input
-                type="checkbox"
-                id="ppo-offered"
-                name="ppoOffered"
-                checked={formData.ppoOffered}
-                onChange={handleChange}
-                className="h-4 w-4"
-              />
-            </div>
-            <div className="mt-4">
-              <InputField
-                label="CTC:"
-                type="text"
-                name="CTC"
-                id="CTC"
-                className={"ml-6"}
-                disabled={!formData.ppoOffered} // Disable if PPO is not offered
-              />
-              <InputField
-                label="Location(s):"
-                type="text"
-                name="locations"
-                id="locations"
-                className={"ml-6"}
-                disabled={!formData.ppoOffered} // Disable if PPO is not offered
-              />
-            </div>
-          </div>
+      // Append regular form fields
+      formDataToSend.append("drive_name", formData.drive_name);
+      formDataToSend.append("company_name", formData.company_name);
+      formDataToSend.append("company_logo", formData.company_logo);
+      formDataToSend.append("about", aboutHtml);
+      formDataToSend.append("type_of_role", formData.type_of_role);
+      formDataToSend.append("location", JSON.stringify(locationArray));
+      formDataToSend.append("ctc", formData.ctc || "");
+      formDataToSend.append("stipend", formData.stipend || "");
+      formDataToSend.append("duration", formData.duration);
+      formDataToSend.append(
+        "number_of_positions",
+        Number(formData.number_of_positions) || 0
+      );
+      formDataToSend.append("deadline", formData.deadline);
+      formDataToSend.append("drive_date", formData.drive_date);
 
-          <hr className="sm:w-[1px] sm:h-[18rem] bg-black/20 w-full h-[1px]" />
+      // Append rounds as JSON string
+      const roundsData = formData.rounds.map((round) => ({
+        round_number: Number(round.round_number) || 0,
+        round_name: round.round_name,
+        description: round.description
+      }));
+      formDataToSend.append("rounds", JSON.stringify(roundsData));
 
-          <div>
-            <div className="flex gap-2 items-center">
-              <p className="text-xl">Full Time</p>
-              <input
-                type="radio"
-                name="employmentType"
-                value="fulltime"
-                checked={formData.employmentType === "fulltime"}
-                onChange={handleChange}
-                className="w-4 h-4 accent-gray-500 focus:ring-0 focus:ring-offset-0 border-gray-300 rounded cursor-pointer"
-              />
-            </div>
-            <div className="mt-4">
-              <InputField
-                label="CTC:"
-                type="text"
-                name="CTC"
-                id="CTC"
-                className={"ml-6"}
-              />
-              <InputField
-                label="Location(s):"
-                type="text"
-                name="locations"
-                id="locations"
-                className={"ml-6"}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  };
+      // Append criteria as JSON string
+      const criteriaData = {
+        tenth_percentage:
+          Number(formData.criteria.tenth_percentage) || undefined,
+        twelfth_percentage:
+          Number(formData.criteria.twelfth_percentage) || undefined,
+        graduation_degree: formData.criteria.graduation_degree || undefined,
+        graduation_year:
+          graduationYearArray.length > 0 ? graduationYearArray : undefined,
+        cgpa: Number(formData.criteria.cgpa) || undefined,
+        stream: streamArray,
+        work_experience_count:
+          Number(formData.criteria.work_experience_count) || undefined,
+        max_backlogs: Number(formData.criteria.max_backlogs) || undefined
+      };
+      formDataToSend.append("criteria", JSON.stringify(criteriaData));
 
-  const SectionThree = () => {
-    return (
-      <section className="mt-8 p-8">
-        <p className="text-xl font-semibold">About Work:</p>
-        <div className="mt-[2rem]">
-          <Editor
-            editorState={editorState}
-            onEditorStateChange={setEditorState}
-            wrapperClassName="demo-wrapper"
-            editorClassName="demo-editor"
-            toolbarClassName="toolbar-class"
-            toolbar={{
-              options: [
-                "inline",
-                "blockType",
-                "list",
-                "textAlign",
-                "link",
-                "history"
-              ],
-              inline: { options: ["bold", "italic", "underline"] },
-              blockType: {
-                options: ["Normal", "H1", "H2", "H3", "H4", "H5", "H6"]
-              },
-              list: { options: ["unordered", "ordered"] }
-            }}
-            editorStyle={{
-              height: "15rem",
-              overflow: "auto",
-              padding: "0 16px",
-              backgroundColor: "white"
-            }}
-          />
-        </div>
-      </section>
-    );
-  };
+      // Append other data as JSON strings
+      formDataToSend.append(
+        "required_details",
+        JSON.stringify(formData.required_details)
+      );
+      formDataToSend.append(
+        "custom_required_details",
+        JSON.stringify(formData.custom_required_details || [])
+      );
+      formDataToSend.append(
+        "custom_questions",
+        JSON.stringify(formData.custom_questions || [])
+      );
 
-  const CheckBox = ({ label, name, options }) => {
-    return (
-      <div className="flex items-center mb-4">
-        <label className="w-40 mr-6">{label}</label>
-        <div className="flex flex-wrap gap-4 items-center">
-          {" "}
-          {/* Added items-center to align items */}
-          {options.map((option, index) => (
-            <div key={index} className="flex items-center ">
-              <input
-                type="checkbox"
-                id={`${name}-${index}`}
-                name={name}
-                value={option.value}
-                className="mr-2"
-                checked={formData[name].includes(option.value)}
-                onChange={handleCheckboxChange.bind(null, name, option.value)}
-              />
-              <label htmlFor={`${name}-${index}`}>{option.label}</label>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+      // Append JD files
+      jdFiles.forEach((file) => {
+        formDataToSend.append("jd_files", file);
+      });
 
-  const yearSemesterOptions = [
-    { value: "1st", label: "1st year (SEM I-II)" },
-    { value: "2nd", label: "2nd year (SEM III-IV)" },
-    { value: "3rd", label: "3rd year (SEM V-VI)" },
-    { value: "4th", label: "4th year (SEM VII-VIII)" }
-  ];
+      console.log("Submitting FormData with files:", jdFiles.length);
 
-  const stream = [
-    { value: "CSE", label: "CSE" },
-    { value: "CSY", label: "CSY" },
-    { value: "AIDS", label: "AI-DS" },
-    { value: "ECE", label: "ECE" }
-  ];
+      // Update the API call to send FormData
+      const backendUrl =
+        import.meta.env.VITE_BACKEND_URL || "http://localhost:8000/api";
+      const res = await fetch(`${backendUrl}/coordinator/drive/create`, {
+        method: "POST",
+        body: formDataToSend,
+        credentials: "include" // This ensures cookies are sent
+      });
 
-  const requiredData = [
-    { value: "name", label: "Name" },
-    { value: "gender", label: "Gender" },
-    { value: "roll", label: "Roll Number" },
-    { value: "email", label: "Email Id" },
-    { value: "personalEmail", label: "Personal Email Id" },
-    { value: "cgpa", label: "CGPA" },
-    { value: "backlogs", label: "Backlogs" },
-    { value: "phone", label: "Phone Number" },
-    { value: "resume", label: "Resume" },
-    { value: "batch", label: "Batch" },
-    { value: "branch", label: "Branch" },
-    { value: "dob", label: "Date of Birth" },
-    { value: "12th", label: "12th Percentage" },
-    { value: "10th", label: "10th Percentage" },
-    { value: "address", label: "Address" },
-    { value: "skills", label: "Skills" },
-    { value: "work", label: "Work Experience" },
-    { value: "github", label: "Github Profile" },
-    { value: "linkedin", label: "Linkedin Profile" },
-    { value: "location", label: "Location Preference" }
-  ];
+      const responseData = await res.json();
 
-  const SectionFour = () => {
-    return (
-      <section className="mt-[2rem] ">
-        <div className="p-8">
-          <p className="text-xl font-semibold mb-[1rem]">Eligibility:</p>
-          <CheckBox
-            label="Year/Semester:"
-            name="yearSemester"
-            options={yearSemesterOptions}
-          />
-          <CheckBox label={"Stream:"} name={"stream"} options={stream} />
-          <InputField
-            label="Minimum CGPA:"
-            type="text"
-            name="minimumCGPA"
-            id="minimumCGPA"
-          />
-          <InputField
-            label="Backlogs:"
-            type="text"
-            name="backlogs"
-            id="backlogs"
-          />
-        </div>
-      </section>
-    );
-  };
+      if (responseData.message === "Drive created successfully") {
+        toastService.success(
+          `Drive created successfully! ${
+            responseData.uploaded_jd_files || 0
+          } JD files uploaded.`
+        );
 
-  const SectionFive = () => {
-    return (
-      <section>
-        <div className="p-8">
-          <div className="flex items-baseline gap-2 mb-4">
-            <p className="text-xl font-semibold">Required Student Data:</p>
-            <p className="text-xs text-red-600">
-              *Select items in order of their sheet placement
-            </p>
-          </div>
-          <CheckBox label="" name="requiredData" options={requiredData} />
-        </div>
+        // Reset form
+        setFormData({
+          drive_name: "",
+          company_name: "",
+          company_logo: "",
+          type_of_role: "",
+          location: "",
+          ctc: "",
+          stipend: "",
+          duration: "",
+          number_of_positions: "",
+          deadline: "",
+          drive_date: "",
+          rounds: [],
+          criteria: {
+            tenth_percentage: "",
+            twelfth_percentage: "",
+            graduation_degree: "",
+            graduation_year: "",
+            cgpa: "",
+            stream: [],
+            work_experience_count: "",
+            max_backlogs: ""
+          },
+          required_details: [],
+          custom_required_details: [],
+          custom_questions: []
+        });
+        setJdFiles([]);
+        setEditorState(EditorState.createEmpty());
 
-        {/* Container for displaying selected data */}
-        <div
-          className={`mx-8 bg-coral-red/20 rounded-lg p-2 min-h-[5rem] flex flex-wrap gap-2 ${
-            formData.requiredData.length > 0 ? "block" : "hidden"
-          }`}
-        >
-          {/* Display selected data with wrapping */}
-          {formData.requiredData.map((data, index) => (
-            <span
-              key={index}
-              className="bg-coral-red/50 p-1 h-[2rem]  rounded-md"
-            >
-              {data}
-            </span>
-          ))}
-        </div>
-      </section>
-    );
+        // Redirect to coordinator dashboard after successful creation
+        setTimeout(() => {
+          navigate("/coordinator/dashboard");
+        }, 1500); // Wait 1.5 seconds to show the success message
+      } else {
+        toastService.error(responseData.error || "Failed to create drive");
+      }
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      if (err.message.includes("duplicate key")) {
+        toastService.error(
+          `Drive "${formData.drive_name}" already exists. Please use a different name`
+        );
+      } else {
+        toastService.error(err.message || "Failed to create drive");
+      }
+    }
   };
 
   return (
-    <div className="bg-white-400 w-[80vw] rounded-lg my-10 p-4 font-ubuntu">
-      <h1 className="text-3xl text-center font-bold">Create Drive</h1>
-      <form onSubmit={handleSubmit}>
-        <SectionOne />
-        <hr className="w-[90%] mx-auto border-0 h-[1px] bg-black/30" />
-        <SectionTwo />
-        <hr className="w-[90%] mx-auto border-0 h-[1px] bg-black/30" />
-        <SectionThree />
-        <hr className="w-[90%] mx-auto border-0 h-[1px] bg-black/30" />
-        <SectionFour />
-        <hr className="w-[90%] mx-auto border-0 h-[1px] bg-black/30" />
-        <SectionFive />
+    <div className="max-w-5xl mx-auto mt-12 mb-16 bg-white rounded-2xl shadow-xl p-8 font-sans transition-all duration-300 hover:shadow-2xl">
+      <h1 className="text-4xl font-extrabold text-center text-gray-900 mb-10 tracking-tight">
+        Create a New Drive
+      </h1>
+      <form onSubmit={handleSubmit} className="space-y-10">
+        <DriveBasicDetails formData={formData} handleChange={handleChange} />
+        <hr className="border-t border-gray-200 my-8" />
+        <AboutWorkSection
+          editorState={editorState}
+          setEditorState={setEditorState}
+        />
+        <hr className="border-t border-gray-200 my-8" />
+        <EligibilitySection
+          formData={formData}
+          handleChange={handleChange}
+          handleCheckboxChange={handleCheckboxChange}
+        />
+        <hr className="border-t border-gray-200 my-8" />
+        <RequiredDetailsSection
+          formData={formData}
+          handleCheckboxChange={handleRequiredDetailsChange}
+        />
+        <hr className="border-t border-gray-200 my-8" />
+        <CustomRequiredDetailsSection
+          formData={formData}
+          onCustomFieldsChange={handleCustomFieldsChange}
+        />
+        <hr className="border-t border-gray-200 my-8" />
+        <CustomQuestionsSection
+          formData={formData}
+          onCustomQuestionsChange={handleCustomQuestionsChange}
+        />
+        <hr className="border-t border-gray-200 my-8" />
+        <JDFilesSection onFilesChange={handleJDFilesChange} />
+        <hr className="border-t border-gray-200 my-8" />
+        <RoundsSection formData={formData} setRounds={handleRoundChange} />
+        <div className="flex justify-center mt-12">
+          <button
+            type="submit"
+            className="bg-gradient-to-r from-[#EB3030] to-[#D00000] text-white font-semibold text-lg rounded-xl px-10 py-4 shadow-md hover:from-[#D00000] hover:to-[#B00000] focus:outline-none focus:ring-4 focus:ring-[#EB3030]/50 transition-all duration-200 transform hover:scale-105"
+          >
+            Create Drive
+          </button>
+        </div>
       </form>
-      <div className="flex items-center justify-center m-4">
-        <button
-          type="submit"
-          className="bg-black text-white rounded-lg px-4 py-2 mt-4 hover:bg-gray-800"
-        >
-          Submit
-        </button>
-      </div>
     </div>
   );
 };
