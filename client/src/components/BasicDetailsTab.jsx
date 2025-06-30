@@ -4,7 +4,14 @@ import { User, Mail, Phone, MapPin } from "lucide-react";
 
 const BasicDetailsTab = ({ studentData, setStudentData, editing }) => {
   const handleChange = (key, value) => {
-    setStudentData((prev) => ({ ...prev, [key]: value }));
+    let processedValue = value;
+
+    // Capitalize roll number automatically
+    if (key === "roll_no") {
+      processedValue = value.toUpperCase();
+    }
+
+    setStudentData((prev) => ({ ...prev, [key]: processedValue }));
   };
 
   const handleAddressChange = (key, value) => {

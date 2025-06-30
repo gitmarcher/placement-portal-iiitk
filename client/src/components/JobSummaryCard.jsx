@@ -101,7 +101,13 @@ function CompanyBanner({ job }) {
             <div className="flex items-center gap-2 text-gray-600">
               <BsCurrencyRupee size={18} className="flex-shrink-0" />
               <span className="text-sm md:text-base">
-                {job.ctc || "Not specified"}
+                {job.type_of_role === "Intern"
+                  ? job.stipend || "Not specified"
+                  : job.type_of_role === "Intern + PPO"
+                  ? `${job.stipend || "N/A"} (Stipend) / ${
+                      job.ctc || "N/A"
+                    } (CTC)`
+                  : job.ctc || "Not specified"}
               </span>
             </div>
           </div>

@@ -225,10 +225,31 @@ export default function AboutWork({ details, studentInfo }) {
                 </h3>
               </div>
               <div className="p-6 space-y-1">
-                <DetailItem
-                  label="CTC"
-                  value={details.ctc || "Not specified"}
-                />
+                {/* Display compensation based on role type */}
+                {details.type_of_role === "Intern" && (
+                  <DetailItem
+                    label="Stipend"
+                    value={details.stipend || "Not specified"}
+                  />
+                )}
+                {details.type_of_role === "Intern + PPO" && (
+                  <>
+                    <DetailItem
+                      label="Stipend (Intern)"
+                      value={details.stipend || "Not specified"}
+                    />
+                    <DetailItem
+                      label="CTC (PPO)"
+                      value={details.ctc || "Not specified"}
+                    />
+                  </>
+                )}
+                {details.type_of_role === "Fulltime" && (
+                  <DetailItem
+                    label="CTC"
+                    value={details.ctc || "Not specified"}
+                  />
+                )}
                 <DetailItem
                   label="Duration"
                   value={details.duration || "Not specified"}

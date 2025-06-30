@@ -24,9 +24,16 @@ const LoginPage = () => {
   // Handle form input changes
   const handleChange = (e) => {
     const { id, value } = e.target;
+    let processedValue = value;
+
+    // Capitalize username for students (roll numbers)
+    if (id === "username" && userType === "student") {
+      processedValue = value.toUpperCase();
+    }
+
     setFormData((prevData) => ({
       ...prevData,
-      [id]: value
+      [id]: processedValue
     }));
   };
 
@@ -95,6 +102,15 @@ const LoginPage = () => {
   // Handle user type change with feedback
   const handleUserTypeChange = (type) => {
     setUserType(type);
+
+    // Capitalize existing username if switching to student and username exists
+    if (type === "student" && formData.username) {
+      setFormData((prev) => ({
+        ...prev,
+        username: prev.username.toUpperCase()
+      }));
+    }
+
     toastService.info(`Switched to ${type} login`);
   };
 

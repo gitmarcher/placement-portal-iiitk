@@ -4,14 +4,21 @@ import React from "react";
 const FormStep1 = ({ formData, setFormData }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let processedValue = value;
+
+    // Capitalize roll number automatically
+    if (name === "roll_no") {
+      processedValue = value.toUpperCase();
+    }
+
     if (name.includes("address.")) {
       const field = name.split(".")[1];
       setFormData({
         ...formData,
-        address: { ...formData.address, [field]: value }
+        address: { ...formData.address, [field]: processedValue }
       });
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData({ ...formData, [name]: processedValue });
     }
   };
 

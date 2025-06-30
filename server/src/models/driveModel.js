@@ -90,6 +90,8 @@ const roundResultsSchema = new mongoose.Schema({
     selected_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
     rejected_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
     waitlisted_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+    offer_accepted_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }], // Track offer acceptance
+    offer_rejected_students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }], // Track offer rejection
     is_published: { type: Boolean, default: false },
     published_at: { type: Date },
     published_by: { type: mongoose.Schema.Types.ObjectId, ref: 'Coordinator' }
@@ -103,6 +105,7 @@ const drive = new mongoose.Schema({
     type_of_role: { type: String },
     location: { type: [String] },
     ctc: { type: String },
+    stipend: { type: String },
     duration: { type: String },
     number_of_positions: { type: Number },
     deadline: { type: Date },
@@ -197,6 +200,16 @@ const drive = new mongoose.Schema({
     current_result_round: { type: Number, default: 1 },
     // Track if results process has started
     results_started: { type: Boolean, default: false },
+    // Track students who accepted offers (for placement tracking)
+    placed_students: [{
+        student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
+        accepted_at: { type: Date, default: Date.now },
+        offer_details: {
+            ctc: { type: String },
+            stipend: { type: String },
+            role_type: { type: String, enum: ['Intern', 'Intern + PPO', 'Fulltime'] }
+        }
+    }],
     jd_files: [{
         filename: { type: String, required: true }, // Stored filename
         original_name: { type: String, required: true }, // Original filename from user

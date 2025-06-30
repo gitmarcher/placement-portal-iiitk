@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { EditorState, convertToRaw } from "draft-js";
 import draftToHtml from "draftjs-to-html";
+import { useNavigate } from "react-router-dom";
 import { toastService } from "./Toast";
 import addDrive from "../API/addDrive";
 import DriveBasicDetails from "./DriveBasicDetails";
@@ -13,6 +14,7 @@ import CustomQuestionsSection from "./CustomQuestionsSection";
 import JDFilesSection from "./JDFilesSection";
 
 const DriveDetails = () => {
+  const navigate = useNavigate();
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [jdFiles, setJdFiles] = useState([]);
   const [formData, setFormData] = useState({
@@ -22,6 +24,7 @@ const DriveDetails = () => {
     type_of_role: "",
     location: "",
     ctc: "",
+    stipend: "",
     duration: "",
     number_of_positions: "",
     deadline: "",
@@ -138,7 +141,8 @@ const DriveDetails = () => {
       formDataToSend.append("about", aboutHtml);
       formDataToSend.append("type_of_role", formData.type_of_role);
       formDataToSend.append("location", JSON.stringify(locationArray));
-      formDataToSend.append("ctc", formData.ctc);
+      formDataToSend.append("ctc", formData.ctc || "");
+      formDataToSend.append("stipend", formData.stipend || "");
       formDataToSend.append("duration", formData.duration);
       formDataToSend.append(
         "number_of_positions",
@@ -212,6 +216,7 @@ const DriveDetails = () => {
             responseData.uploaded_jd_files || 0
           } JD files uploaded.`
         );
+
         // Reset form
         setFormData({
           drive_name: "",
@@ -220,6 +225,7 @@ const DriveDetails = () => {
           type_of_role: "",
           location: "",
           ctc: "",
+          stipend: "",
           duration: "",
           number_of_positions: "",
           deadline: "",
@@ -241,6 +247,11 @@ const DriveDetails = () => {
         });
         setJdFiles([]);
         setEditorState(EditorState.createEmpty());
+
+        // Redirect to coordinator dashboard after successful creation
+        setTimeout(() => {
+          navigate("/coordinator/dashboard");
+        }, 1500); // Wait 1.5 seconds to show the success message
       } else {
         toastService.error(responseData.error || "Failed to create drive");
       }

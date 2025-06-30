@@ -140,7 +140,7 @@ const Filter = ({
                 )}
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-10 gap-y-2 p-2">
-                {["Internship", "PPO", "Intern + PPO"].map((option) => (
+                {["Intern", "Intern + PPO", "Fulltime"].map((option) => (
                   <div
                     key={option}
                     className="flex items-center justify-center space-x-2 cursor-pointer text-gray-400 hover:text-gray-600"

@@ -11,6 +11,7 @@ const Results = ({ driveId, driveData }) => {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [searchText, setSearchText] = useState("");
   const [editMode, setEditMode] = useState(false);
+  const [isOfferAcceptanceRound, setIsOfferAcceptanceRound] = useState(false);
 
   const showToast = (message, type = "info") => {
     setToast({ show: true, message, type });
@@ -43,6 +44,7 @@ const Results = ({ driveId, driveData }) => {
         `/coordinator/drive/round-eligible/${driveId}/${roundNumber}`
       );
       setEligibleStudents(response.data.eligible_students);
+      setIsOfferAcceptanceRound(response.data.is_offer_acceptance || false);
 
       // Initialize student results state - default to no selection or load existing results
       const initialResults = {};
@@ -53,18 +55,34 @@ const Results = ({ driveId, driveData }) => {
       response.data.eligible_students.forEach((student) => {
         // If results are published, load existing selections
         if (roundResult?.is_published) {
-          if (roundResult.selected_students?.includes(student.student_id)) {
-            initialResults[student.student_id] = "shortlisted";
-          } else if (
-            roundResult.rejected_students?.includes(student.student_id)
-          ) {
-            initialResults[student.student_id] = "rejected";
-          } else if (
-            roundResult.waitlisted_students?.includes(student.student_id)
-          ) {
-            initialResults[student.student_id] = "waitlisted";
+          if (response.data.is_offer_acceptance) {
+            // For offer acceptance round
+            if (
+              roundResult.offer_accepted_students?.includes(student.student_id)
+            ) {
+              initialResults[student.student_id] = "accepted";
+            } else if (
+              roundResult.offer_rejected_students?.includes(student.student_id)
+            ) {
+              initialResults[student.student_id] = "rejected";
+            } else {
+              initialResults[student.student_id] = "";
+            }
           } else {
-            initialResults[student.student_id] = "";
+            // For regular rounds
+            if (roundResult.selected_students?.includes(student.student_id)) {
+              initialResults[student.student_id] = "shortlisted";
+            } else if (
+              roundResult.rejected_students?.includes(student.student_id)
+            ) {
+              initialResults[student.student_id] = "rejected";
+            } else if (
+              roundResult.waitlisted_students?.includes(student.student_id)
+            ) {
+              initialResults[student.student_id] = "waitlisted";
+            } else {
+              initialResults[student.student_id] = "";
+            }
           }
         } else {
           initialResults[student.student_id] = ""; // No default selection for unpublished results
@@ -230,25 +248,40 @@ const Results = ({ driveId, driveData }) => {
 
   // Get counts for current round results based on filtered students
   const getResultCounts = () => {
-    const shortlisted = Object.entries(studentResults).filter(
-      ([studentId, status]) =>
-        status === "shortlisted" &&
-        filteredStudents.some((student) => student.student_id === studentId)
-    ).length;
-    const rejected = Object.entries(studentResults).filter(
-      ([studentId, status]) =>
-        status === "rejected" &&
-        filteredStudents.some((student) => student.student_id === studentId)
-    ).length;
-    const waitlisted = Object.entries(studentResults).filter(
-      ([studentId, status]) =>
-        status === "waitlisted" &&
-        filteredStudents.some((student) => student.student_id === studentId)
-    ).length;
-    return { shortlisted, rejected, waitlisted };
+    if (isOfferAcceptanceRound) {
+      const accepted = Object.entries(studentResults).filter(
+        ([studentId, status]) =>
+          status === "accepted" &&
+          filteredStudents.some((student) => student.student_id === studentId)
+      ).length;
+      const rejected = Object.entries(studentResults).filter(
+        ([studentId, status]) =>
+          status === "rejected" &&
+          filteredStudents.some((student) => student.student_id === studentId)
+      ).length;
+      return { accepted, rejected, waitlisted: 0 };
+    } else {
+      const shortlisted = Object.entries(studentResults).filter(
+        ([studentId, status]) =>
+          status === "shortlisted" &&
+          filteredStudents.some((student) => student.student_id === studentId)
+      ).length;
+      const rejected = Object.entries(studentResults).filter(
+        ([studentId, status]) =>
+          status === "rejected" &&
+          filteredStudents.some((student) => student.student_id === studentId)
+      ).length;
+      const waitlisted = Object.entries(studentResults).filter(
+        ([studentId, status]) =>
+          status === "waitlisted" &&
+          filteredStudents.some((student) => student.student_id === studentId)
+      ).length;
+      return { shortlisted, rejected, waitlisted };
+    }
   };
 
-  const { shortlisted, rejected, waitlisted } = getResultCounts();
+  const resultCounts = getResultCounts();
+  const { shortlisted, rejected, waitlisted, accepted } = resultCounts;
 
   return (
     <div className="font-ubuntu max-w-6xl mx-auto py-6">
@@ -331,6 +364,34 @@ const Results = ({ driveId, driveData }) => {
                 </button>
               );
             })}
+
+            {/* Offer Acceptance Round */}
+            {resultsData.rounds.length > 0 &&
+              resultsData.round_results?.find(
+                (r) => r.round_number === resultsData.rounds.length
+              )?.is_published && (
+                <button
+                  onClick={() =>
+                    handleRoundChange(resultsData.rounds.length + 1)
+                  }
+                  className={`px-3 py-2 rounded-lg border transition-colors text-sm ${
+                    currentRound === resultsData.rounds.length + 1
+                      ? "bg-coral-red text-white border-coral-red"
+                      : resultsData.round_results?.find(
+                          (r) =>
+                            r.round_number === resultsData.rounds.length + 1
+                        )?.is_published
+                      ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+                      : "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
+                  }`}
+                >
+                  <div className="font-medium">Offer Acceptance</div>
+                  <div className="text-xs">Final Round</div>
+                  {resultsData.round_results?.find(
+                    (r) => r.round_number === resultsData.rounds.length + 1
+                  )?.is_published && <div className="text-xs">✓ Published</div>}
+                </button>
+              )}
           </div>
         </div>
       )}
@@ -341,12 +402,18 @@ const Results = ({ driveId, driveData }) => {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h3 className="text-lg font-semibold">
-                Round {currentRound}:{" "}
-                {
-                  resultsData.rounds.find(
-                    (r) => r.round_number === currentRound
-                  )?.round_name
-                }
+                {isOfferAcceptanceRound ? (
+                  "Offer Acceptance: Final Round"
+                ) : (
+                  <>
+                    Round {currentRound}:{" "}
+                    {
+                      resultsData.rounds.find(
+                        (r) => r.round_number === currentRound
+                      )?.round_name
+                    }
+                  </>
+                )}
               </h3>
               <p className="text-gray-600 text-sm">
                 Eligible Students: {eligibleStudents.length}
@@ -466,23 +533,31 @@ const Results = ({ driveId, driveData }) => {
           )}
 
           {/* Results Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div
+            className={`grid gap-4 mb-6 ${
+              isOfferAcceptanceRound ? "grid-cols-2" : "grid-cols-3"
+            }`}
+          >
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
               <div className="text-lg font-bold text-green-800">
-                {shortlisted}
+                {isOfferAcceptanceRound ? accepted : shortlisted}
               </div>
-              <div className="text-xs text-green-600">Shortlisted</div>
+              <div className="text-xs text-green-600">
+                {isOfferAcceptanceRound ? "Accepted" : "Shortlisted"}
+              </div>
             </div>
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
               <div className="text-lg font-bold text-red-800">{rejected}</div>
               <div className="text-xs text-red-600">Rejected</div>
             </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-yellow-800">
-                {waitlisted}
+            {!isOfferAcceptanceRound && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
+                <div className="text-lg font-bold text-yellow-800">
+                  {waitlisted}
+                </div>
+                <div className="text-xs text-yellow-600">Waitlisted</div>
               </div>
-              <div className="text-xs text-yellow-600">Waitlisted</div>
-            </div>
+            )}
           </div>
 
           {/* Student List with Column Headers */}
@@ -497,14 +572,16 @@ const Results = ({ driveId, driveData }) => {
                           Student
                         </th>
                         <th className="text-center py-3 px-4 font-medium text-green-700">
-                          Shortlisted
+                          {isOfferAcceptanceRound ? "Accepted" : "Shortlisted"}
                         </th>
                         <th className="text-center py-3 px-4 font-medium text-red-700">
                           Rejected
                         </th>
-                        <th className="text-center py-3 px-4 font-medium text-yellow-700">
-                          Waitlisted
-                        </th>
+                        {!isOfferAcceptanceRound && (
+                          <th className="text-center py-3 px-4 font-medium text-yellow-700">
+                            Waitlisted
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
@@ -532,10 +609,16 @@ const Results = ({ driveId, driveData }) => {
                             <input
                               type="radio"
                               name={`student-${student.student_id}`}
-                              value="shortlisted"
+                              value={
+                                isOfferAcceptanceRound
+                                  ? "accepted"
+                                  : "shortlisted"
+                              }
                               checked={
                                 studentResults[student.student_id] ===
-                                "shortlisted"
+                                (isOfferAcceptanceRound
+                                  ? "accepted"
+                                  : "shortlisted")
                               }
                               onChange={(e) =>
                                 handleStudentResultChange(
@@ -564,24 +647,26 @@ const Results = ({ driveId, driveData }) => {
                               className="text-red-600 focus:ring-red-500"
                             />
                           </td>
-                          <td className="py-3 px-4 text-center">
-                            <input
-                              type="radio"
-                              name={`student-${student.student_id}`}
-                              value="waitlisted"
-                              checked={
-                                studentResults[student.student_id] ===
-                                "waitlisted"
-                              }
-                              onChange={(e) =>
-                                handleStudentResultChange(
-                                  student.student_id,
-                                  e.target.value
-                                )
-                              }
-                              className="text-yellow-600 focus:ring-yellow-500"
-                            />
-                          </td>
+                          {!isOfferAcceptanceRound && (
+                            <td className="py-3 px-4 text-center">
+                              <input
+                                type="radio"
+                                name={`student-${student.student_id}`}
+                                value="waitlisted"
+                                checked={
+                                  studentResults[student.student_id] ===
+                                  "waitlisted"
+                                }
+                                onChange={(e) =>
+                                  handleStudentResultChange(
+                                    student.student_id,
+                                    e.target.value
+                                  )
+                                }
+                                className="text-yellow-600 focus:ring-yellow-500"
+                              />
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -622,21 +707,41 @@ const Results = ({ driveId, driveData }) => {
                 let status = "No Status";
                 let statusClass = "bg-gray-100 text-gray-600";
 
-                if (
-                  roundResult?.selected_students?.includes(student.student_id)
-                ) {
-                  status = "Shortlisted";
-                  statusClass = "bg-green-100 text-green-800";
-                } else if (
-                  roundResult?.rejected_students?.includes(student.student_id)
-                ) {
-                  status = "Rejected";
-                  statusClass = "bg-red-100 text-red-800";
-                } else if (
-                  roundResult?.waitlisted_students?.includes(student.student_id)
-                ) {
-                  status = "Waitlisted";
-                  statusClass = "bg-yellow-100 text-yellow-800";
+                if (isOfferAcceptanceRound) {
+                  if (
+                    roundResult?.offer_accepted_students?.includes(
+                      student.student_id
+                    )
+                  ) {
+                    status = "Offer Accepted";
+                    statusClass = "bg-green-100 text-green-800";
+                  } else if (
+                    roundResult?.offer_rejected_students?.includes(
+                      student.student_id
+                    )
+                  ) {
+                    status = "Offer Rejected";
+                    statusClass = "bg-red-100 text-red-800";
+                  }
+                } else {
+                  if (
+                    roundResult?.selected_students?.includes(student.student_id)
+                  ) {
+                    status = "Shortlisted";
+                    statusClass = "bg-green-100 text-green-800";
+                  } else if (
+                    roundResult?.rejected_students?.includes(student.student_id)
+                  ) {
+                    status = "Rejected";
+                    statusClass = "bg-red-100 text-red-800";
+                  } else if (
+                    roundResult?.waitlisted_students?.includes(
+                      student.student_id
+                    )
+                  ) {
+                    status = "Waitlisted";
+                    statusClass = "bg-yellow-100 text-yellow-800";
+                  }
                 }
 
                 return (

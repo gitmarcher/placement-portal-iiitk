@@ -46,7 +46,13 @@ const CoordinatorJobCard = ({ job }) => (
         </div>
         <div className="flex items-center gap-1.5 text-sm text-gray-600">
           <BsCurrencyRupee className="flex-shrink-0 text-gray-500" />
-          <span className="break-words">{job.salary}</span>
+          <span className="break-words">
+            {job.type === "Intern"
+              ? job.stipend
+              : job.type === "Intern + PPO"
+              ? `${job.stipend} (Stipend) / ${job.salary} (CTC)`
+              : job.salary}
+          </span>
         </div>
       </div>
       <div className="flex flex-col xs:flex-row justify-between xs:items-center gap-3 xs:gap-4 pt-2 border-t border-gray-100">

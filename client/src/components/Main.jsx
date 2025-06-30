@@ -56,7 +56,7 @@ const JobCard = ({ job }) => (
                 </div>
                 <div className="flex items-center gap-1.5 text-sm text-gray-600">
                   <BsCurrencyRupee className="text-gray-500" />
-                  {job.salary}
+                  {job.stipend}
                 </div>
               </div>
             </div>
@@ -71,7 +71,7 @@ const JobCard = ({ job }) => (
                 </div>
                 <div className="flex items-center gap-1.5 text-sm text-gray-600">
                   <BsCurrencyRupee className="text-gray-500" />
-                  {job.ppo}
+                  {job.stipend}
                 </div>
               </div>
             </div>
@@ -89,7 +89,7 @@ const JobCard = ({ job }) => (
           </div>
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
             <BsCurrencyRupee className="text-gray-500" />
-            {job.salary}
+            {job.type === "Intern" ? job.stipend : job.salary}
           </div>
         </div>
       )}
@@ -210,7 +210,7 @@ const Main = ({ searchTerm = "", filters = {} }) => {
           return false;
         });
 
-      // Type filter (Internship, PPO, Intern + PPO)
+      // Type filter (Intern, Intern + PPO, Fulltime)
       const matchesType =
         !filters.type ||
         filters.type.length === 0 ||
@@ -218,12 +218,12 @@ const Main = ({ searchTerm = "", filters = {} }) => {
           const driveType = (drive.type_of_role || "").toLowerCase();
           const filterType = type.toLowerCase();
 
-          if (filterType === "internship") {
-            return driveType.includes("intern") && !driveType.includes("ppo");
-          } else if (filterType === "ppo") {
-            return driveType.includes("ppo") && !driveType.includes("intern");
+          if (filterType === "intern") {
+            return driveType === "intern";
+          } else if (filterType === "fulltime") {
+            return driveType === "fulltime";
           } else if (filterType === "intern + ppo") {
-            return driveType.includes("intern") && driveType.includes("ppo");
+            return driveType === "intern + ppo";
           }
           return driveType.includes(filterType);
         });
@@ -323,6 +323,7 @@ const Main = ({ searchTerm = "", filters = {} }) => {
       : "Not specified",
     duration: drive.duration || "Not specified",
     salary: drive.ctc || "Not specified",
+    stipend: drive.stipend || "Not specified",
     deadline: drive.deadline
       ? new Date(drive.deadline).toLocaleString()
       : "Not specified",

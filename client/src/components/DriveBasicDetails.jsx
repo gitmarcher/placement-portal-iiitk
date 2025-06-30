@@ -41,10 +41,9 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 onChange={handleChange}
               >
                 <option value="">Select role type</option>
-                <option value="Internship">Internship</option>
-                <option value="Full-time">Full-time</option>
-                <option value="Internship + PPO">Internship + PPO</option>
-                <option value="PPO">PPO</option>
+                <option value="Intern">Intern</option>
+                <option value="Intern + PPO">Intern + PPO</option>
+                <option value="Fulltime">Fulltime</option>
               </select>
             </div>
             <div className="form-group">
@@ -64,23 +63,87 @@ const DriveBasicDetails = ({ formData, handleChange }) => {
                 placeholder="Enter locations, comma-separated (e.g., Mumbai, Pune)"
               />
             </div>
-            <div className="form-group">
-              <label
-                htmlFor="ctc"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                CTC
-              </label>
-              <input
-                type="text"
-                name="ctc"
-                id="ctc"
-                className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
-                value={formData.ctc}
-                onChange={handleChange}
-                placeholder="e.g., 5 LPA"
-              />
-            </div>
+
+            {/* Conditional rendering of CTC and Stipend based on role type */}
+            {formData.type_of_role === "Intern" && (
+              <div className="form-group">
+                <label
+                  htmlFor="stipend"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Stipend
+                </label>
+                <input
+                  type="text"
+                  name="stipend"
+                  id="stipend"
+                  className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                  value={formData.stipend || ""}
+                  onChange={handleChange}
+                  placeholder="e.g., 25,000/month"
+                />
+              </div>
+            )}
+
+            {formData.type_of_role === "Intern + PPO" && (
+              <>
+                <div className="form-group">
+                  <label
+                    htmlFor="stipend"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Stipend
+                  </label>
+                  <input
+                    type="text"
+                    name="stipend"
+                    id="stipend"
+                    className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                    value={formData.stipend || ""}
+                    onChange={handleChange}
+                    placeholder="e.g., 25,000/month"
+                  />
+                </div>
+                <div className="form-group">
+                  <label
+                    htmlFor="ctc"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    CTC (for PPO)
+                  </label>
+                  <input
+                    type="text"
+                    name="ctc"
+                    id="ctc"
+                    className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                    value={formData.ctc}
+                    onChange={handleChange}
+                    placeholder="e.g., 5 LPA"
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.type_of_role === "Fulltime" && (
+              <div className="form-group">
+                <label
+                  htmlFor="ctc"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  CTC
+                </label>
+                <input
+                  type="text"
+                  name="ctc"
+                  id="ctc"
+                  className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+                  value={formData.ctc}
+                  onChange={handleChange}
+                  placeholder="e.g., 5 LPA"
+                />
+              </div>
+            )}
+
             <div className="form-group">
               <label
                 htmlFor="duration"

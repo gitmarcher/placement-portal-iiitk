@@ -71,6 +71,7 @@ router.post('/create', protectCoordinatorAuth, uploadJDs.array('jd_files', 10), 
       about,
       type_of_role,
       ctc,
+      stipend,
       duration,
       number_of_positions,
       deadline,
@@ -106,6 +107,7 @@ router.post('/create', protectCoordinatorAuth, uploadJDs.array('jd_files', 10), 
       type_of_role,
       location,
       ctc,
+      stipend,
       duration,
       number_of_positions,
       deadline,
@@ -843,6 +845,8 @@ router.post('/start-results/:driveId', protectCoordinatorAuth, async (req, res) 
             selected_students: [],
             rejected_students: [],
             waitlisted_students: [],
+            offer_accepted_students: [],
+            offer_rejected_students: [],
             is_published: false
         }));
 
@@ -876,8 +880,28 @@ router.get('/round-eligible/:driveId/:roundNumber', protectCoordinatorAuth, asyn
         }
 
         let eligibleStudents = [];
+        let roundName = '';
+        let isOfferAcceptanceRound = round > drive.rounds.length;
 
-        if (round === 1) {
+        if (isOfferAcceptanceRound) {
+            // For offer acceptance round, get students selected in the final round
+            const finalRound = drive.rounds.length;
+            const finalRoundResult = drive.round_results.find(r => r.round_number === finalRound);
+            
+            if (finalRoundResult && finalRoundResult.is_published && finalRoundResult.selected_students.length > 0) {
+                const selectedStudentIds = finalRoundResult.selected_students.map(id => id.toString());
+                eligibleStudents = drive.applied_students
+                    .filter(app => selectedStudentIds.includes(app.student.toString()))
+                    .map(app => ({
+                        student_id: app.student,
+                        name: app.name,
+                        email: app.email,
+                        phone: app.phone,
+                        current_status: app.current_status
+                    }));
+            }
+            roundName = 'Offer Acceptance';
+        } else if (round === 1) {
             // For first round, all applied students are eligible
             eligibleStudents = drive.applied_students.map(app => ({
                 student_id: app.student,
@@ -886,6 +910,7 @@ router.get('/round-eligible/:driveId/:roundNumber', protectCoordinatorAuth, asyn
                 phone: app.phone,
                 current_status: app.current_status
             }));
+            roundName = drive.rounds.find(r => r.round_number === round)?.round_name || `Round ${round}`;
         } else {
             // For subsequent rounds, only students selected in previous round are eligible
             const previousRoundResult = drive.round_results.find(r => r.round_number === round - 1);
@@ -902,14 +927,21 @@ router.get('/round-eligible/:driveId/:roundNumber', protectCoordinatorAuth, asyn
                         current_status: app.current_status
                     }));
             }
+            roundName = drive.rounds.find(r => r.round_number === round)?.round_name || `Round ${round}`;
         }
+
+        // Check if offer acceptance round can be shown
+        const canShowOfferAcceptance = isOfferAcceptanceRound && 
+            drive.rounds.length > 0 && 
+            drive.round_results.find(r => r.round_number === drive.rounds.length)?.is_published;
 
         res.json({
             round_number: round,
-            round_name: drive.rounds.find(r => r.round_number === round)?.round_name || `Round ${round}`,
+            round_name: roundName,
             eligible_students: eligibleStudents,
-            can_publish: round <= drive.current_result_round,
-            is_published: drive.round_results.find(r => r.round_number === round)?.is_published || false
+            can_publish: isOfferAcceptanceRound ? canShowOfferAcceptance : round <= drive.current_result_round,
+            is_published: drive.round_results.find(r => r.round_number === round)?.is_published || false,
+            is_offer_acceptance: isOfferAcceptanceRound
         });
     } catch (error) {
         console.error('Error fetching eligible students:', error);
@@ -921,7 +953,7 @@ router.get('/round-eligible/:driveId/:roundNumber', protectCoordinatorAuth, asyn
 router.post('/publish-results/:driveId/:roundNumber', protectCoordinatorAuth, async (req, res) => {
     try {
         const { driveId, roundNumber } = req.params;
-        const { student_results } = req.body; // Changed from selected_students to student_results
+        const { student_results } = req.body;
         const round = parseInt(roundNumber);
         
         const drive = await Drive.findById(driveId);
@@ -937,25 +969,96 @@ router.post('/publish-results/:driveId/:roundNumber', protectCoordinatorAuth, as
             });
         }
 
-        // Check if trying to publish future rounds
-        if (round > drive.current_result_round) {
+        // Check if this is the Offer Acceptance round
+        const isOfferAcceptanceRound = round > drive.rounds.length;
+        
+        if (!isOfferAcceptanceRound && round > drive.current_result_round) {
             return res.status(400).json({ 
                 message: `Cannot publish results for future rounds. Current round is ${drive.current_result_round}.` 
             });
         }
 
-        // Publish results for the specified round
-        const roundResult = drive.round_results.find(r => r.round_number === round);
+        // Find or create round result
+        let roundResult = drive.round_results.find(r => r.round_number === round);
         if (!roundResult) {
-            return res.status(404).json({ message: 'Round not found' });
+            if (isOfferAcceptanceRound) {
+                // Create Offer Acceptance round result
+                roundResult = {
+                    round_number: round,
+                    round_name: "Offer Acceptance",
+                    selected_students: [],
+                    rejected_students: [],
+                    waitlisted_students: [],
+                    offer_accepted_students: [],
+                    offer_rejected_students: [],
+                    is_published: false
+                };
+                drive.round_results.push(roundResult);
+            } else {
+                return res.status(404).json({ message: 'Round not found' });
+            }
         }
 
-        roundResult.selected_students = student_results;
+        // Process student results
+        if (isOfferAcceptanceRound) {
+            // Handle offer acceptance round
+            roundResult.offer_accepted_students = [];
+            roundResult.offer_rejected_students = [];
+            
+            Object.entries(student_results).forEach(([studentId, status]) => {
+                if (status === 'accepted') {
+                    roundResult.offer_accepted_students.push(studentId);
+                    // Add to placed students in drive
+                    const existingPlacement = drive.placed_students.find(p => p.student_id.toString() === studentId);
+                    if (!existingPlacement) {
+                        drive.placed_students.push({
+                            student_id: studentId,
+                            accepted_at: new Date(),
+                            offer_details: {
+                                ctc: drive.ctc,
+                                stipend: drive.stipend,
+                                role_type: drive.type_of_role
+                            }
+                        });
+                    }
+                } else if (status === 'rejected') {
+                    roundResult.offer_rejected_students.push(studentId);
+                }
+            });
+        } else {
+            // Handle regular rounds
+            roundResult.selected_students = [];
+            roundResult.rejected_students = [];
+            roundResult.waitlisted_students = [];
+            
+            Object.entries(student_results).forEach(([studentId, status]) => {
+                if (status === 'shortlisted') {
+                    roundResult.selected_students.push(studentId);
+                } else if (status === 'rejected') {
+                    roundResult.rejected_students.push(studentId);
+                } else if (status === 'waitlisted') {
+                    roundResult.waitlisted_students.push(studentId);
+                }
+            });
+
+            // Move to next round if this is the current round
+            if (round === drive.current_result_round && round < drive.rounds.length) {
+                drive.current_result_round = round + 1;
+            }
+        }
+
         roundResult.is_published = true;
+        roundResult.published_at = new Date();
+        roundResult.published_by = req.user.id;
 
         await drive.save();
 
-        res.json({ message: 'Results published successfully', round_results: drive.round_results });
+        res.json({ 
+            message: 'Results published successfully', 
+            round_results: drive.round_results,
+            current_round: drive.current_result_round,
+            is_offer_acceptance: isOfferAcceptanceRound
+        });
     } catch (error) {
         console.error('Error publishing results:', error);
         res.status(500).json({ error: 'Failed to publish results' });
@@ -997,6 +1100,183 @@ router.get('/download-jd/:driveId/:filename', async (req, res) => {
     } catch (error) {
         console.error('Error downloading JD file:', error);
         res.status(500).json({ error: 'Failed to download file' });
+    }
+});
+
+// Placement Tracker APIs
+
+// Get placement statistics by batch
+router.get('/placement/statistics/:batch', protectCoordinatorAuth, async (req, res) => {
+    try {
+        const { batch } = req.params;
+        const batchYear = parseInt(batch);
+
+        // Get all students in the batch
+        const allStudents = await Student.find({ batch: batchYear }).populate('creds');
+        
+        // Get all drives with placed students
+        const drives = await Drive.find({
+            'placed_students.0': { $exists: true }
+        }).populate({
+            path: 'placed_students.student_id',
+            match: { batch: batchYear },
+            select: 'name email batch stream'
+        });
+
+        // Filter out drives that don't have students from this batch
+        const relevantDrives = drives.filter(drive => 
+            drive.placed_students.some(placement => placement.student_id && placement.student_id.batch === batchYear)
+        );
+
+        // Get placed students
+        const placedStudentIds = new Set();
+        const placements = [];
+        const ctcValues = [];
+        const stipendValues = [];
+        const companies = new Set();
+
+        relevantDrives.forEach(drive => {
+            drive.placed_students.forEach(placement => {
+                if (placement.student_id && placement.student_id.batch === batchYear) {
+                    placedStudentIds.add(placement.student_id._id.toString());
+                    placements.push({
+                        student: placement.student_id,
+                        company: drive.company_name,
+                        role_type: placement.offer_details.role_type,
+                        ctc: placement.offer_details.ctc,
+                        stipend: placement.offer_details.stipend,
+                        accepted_at: placement.accepted_at
+                    });
+                    
+                    companies.add(drive.company_name);
+                    
+                    // Parse compensation values
+                    if (placement.offer_details.ctc && placement.offer_details.ctc !== 'N/A') {
+                        const ctc = parseFloat(placement.offer_details.ctc.replace(/[^\d.]/g, ''));
+                        if (!isNaN(ctc)) ctcValues.push(ctc);
+                    }
+                    
+                    if (placement.offer_details.stipend && placement.offer_details.stipend !== 'N/A') {
+                        const stipend = parseFloat(placement.offer_details.stipend.replace(/[^\d.]/g, ''));
+                        if (!isNaN(stipend)) stipendValues.push(stipend);
+                    }
+                }
+            });
+        });
+
+        // Calculate statistics
+        const totalStudents = allStudents.length;
+        const placedStudents = placedStudentIds.size;
+        
+        const avgCTC = ctcValues.length > 0 ? 
+            (ctcValues.reduce((a, b) => a + b, 0) / ctcValues.length).toFixed(2) : 0;
+        
+        const avgStipend = stipendValues.length > 0 ? 
+            (stipendValues.reduce((a, b) => a + b, 0) / stipendValues.length).toFixed(2) : 0;
+        
+        const medianCTC = ctcValues.length > 0 ? 
+            ctcValues.sort((a, b) => a - b)[Math.floor(ctcValues.length / 2)].toFixed(2) : 0;
+        
+        const medianStipend = stipendValues.length > 0 ? 
+            stipendValues.sort((a, b) => a - b)[Math.floor(stipendValues.length / 2)].toFixed(2) : 0;
+
+        res.json({
+            batch: batchYear,
+            totalStudents,
+            placedStudents,
+            placementPercentage: totalStudents > 0 ? ((placedStudents / totalStudents) * 100).toFixed(2) : 0,
+            avgCTC,
+            avgStipend,
+            medianCTC,
+            medianStipend,
+            companiesVisited: Array.from(companies),
+            totalCompanies: companies.size,
+            placements
+        });
+    } catch (error) {
+        console.error('Error fetching placement statistics:', error);
+        res.status(500).json({ error: 'Failed to fetch placement statistics' });
+    }
+});
+
+// Get detailed student placement data by batch
+router.get('/placement/students/:batch', protectCoordinatorAuth, async (req, res) => {
+    try {
+        const { batch } = req.params;
+        const { search = '' } = req.query;
+        const batchYear = parseInt(batch);
+
+        // Get all students in the batch
+        const students = await Student.find({ 
+            batch: batchYear,
+            ...(search && {
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                    { roll_no: { $regex: search, $options: 'i' } }
+                ]
+            })
+        }).populate('creds');
+
+        // Get all drives with placed students from this batch
+        const drives = await Drive.find({
+            'placed_students.0': { $exists: true }
+        }).populate({
+            path: 'placed_students.student_id',
+            match: { batch: batchYear }
+        });
+
+        // Create a map of student placements
+        const studentPlacements = new Map();
+        
+        drives.forEach(drive => {
+            drive.placed_students.forEach(placement => {
+                if (placement.student_id && placement.student_id.batch === batchYear) {
+                    studentPlacements.set(placement.student_id._id.toString(), {
+                        company: drive.company_name,
+                        role_type: placement.offer_details.role_type,
+                        ctc: placement.offer_details.ctc,
+                        stipend: placement.offer_details.stipend,
+                        accepted_at: placement.accepted_at
+                    });
+                }
+            });
+        });
+
+        // Combine student data with placement data
+        const studentDetails = students.map(student => ({
+            student_id: student._id,
+            name: student.name,
+            email: student.email,
+            roll_no: student.roll_no,
+            stream: student.stream,
+            cgpa: student.academics.cgpa,
+            placement: studentPlacements.get(student._id.toString()) || null,
+            isPlaced: studentPlacements.has(student._id.toString())
+        }));
+
+        res.json({
+            batch: batchYear,
+            students: studentDetails,
+            totalStudents: studentDetails.length,
+            placedStudents: studentDetails.filter(s => s.isPlaced).length
+        });
+    } catch (error) {
+        console.error('Error fetching student placement details:', error);
+        res.status(500).json({ error: 'Failed to fetch student placement details' });
+    }
+});
+
+// Get available batches
+router.get('/placement/batches', protectCoordinatorAuth, async (req, res) => {
+    try {
+        const batches = await Student.distinct('batch');
+        const sortedBatches = batches.sort((a, b) => b - a); // Latest first
+        
+        res.json({ batches: sortedBatches });
+    } catch (error) {
+        console.error('Error fetching available batches:', error);
+        res.status(500).json({ error: 'Failed to fetch available batches' });
     }
 });
 
