@@ -130,18 +130,43 @@ const CoordinatorMain = ({ searchTerm, filters = {} }) => {
           ));
 
       // Batch filter (based on graduation year in criteria)
-      const matchesBatch =
-        !filters.batch ||
-        filters.batch.length === 0 ||
-        (drive.criteria &&
+      const matchesBatch = (() => {
+        // If no batch filter is set or it's not a valid string, show all drives
+        if (
+          !filters.batch ||
+          typeof filters.batch !== "string" ||
+          filters.batch.trim() === ""
+        ) {
+          return true;
+        }
+
+        // Parse batch filter (comma-separated string to array)
+        const batchArray = filters.batch
+          .split(",")
+          .map((b) => b.trim())
+          .filter((b) => b !== "")
+          .map((b) => parseInt(b))
+          .filter((b) => !isNaN(b));
+
+        // If no valid batches parsed, show all drives
+        if (batchArray.length === 0) {
+          return true;
+        }
+
+        // Check if drive has graduation year criteria
+        if (
+          drive.criteria &&
           drive.criteria.graduation_year &&
-          Array.isArray(drive.criteria.graduation_year) &&
-          filters.batch.some((batch) =>
-            drive.criteria.graduation_year.includes(parseInt(batch))
-          )) ||
+          Array.isArray(drive.criteria.graduation_year)
+        ) {
+          return batchArray.some((batch) =>
+            drive.criteria.graduation_year.includes(batch)
+          );
+        }
+
         // If no specific graduation year criteria, show for all batches
-        !drive.criteria ||
-        !drive.criteria.graduation_year;
+        return true;
+      })();
 
       return (
         matchesBasicSearch &&

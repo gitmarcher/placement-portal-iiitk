@@ -33,7 +33,7 @@ function CoordinatorDashboard() {
     type: [],
     location: [],
     locationSearch: "",
-    batch: []
+    batch: ""
   });
 
   // Context and hooks
