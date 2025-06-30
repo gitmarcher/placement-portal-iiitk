@@ -201,9 +201,7 @@ const DriveDetails = () => {
       const res = await fetch(`${backendUrl}/coordinator/drive/create`, {
         method: "POST",
         body: formDataToSend,
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`
-        }
+        credentials: "include" // This ensures cookies are sent
       });
 
       const responseData = await res.json();
