@@ -163,7 +163,7 @@ router.put('/toggle-active/:driveId', protectCoordinatorAuth, async (req, res) =
             return res.status(404).json({ error: 'Drive not found' });
         }
 
-        const { action } = req.body; // 'end-applications', 'end-drive', or 'reactivate'
+        const { action } = req.body; // 'end-applications', 'end-drive', 'reactivate', or 'resume-applications'
         
         if (action === 'end-applications') {
             // End applications but keep drive active
@@ -172,6 +172,22 @@ router.put('/toggle-active/:driveId', protectCoordinatorAuth, async (req, res) =
             
             res.json({ 
                 message: 'Applications closed successfully',
+                isActive: drive.isActive,
+                acceptingApplications: drive.acceptingApplications
+            });
+        } else if (action === 'resume-applications') {
+            // Resume applications only if results haven't started
+            if (drive.results_started) {
+                return res.status(400).json({ 
+                    error: 'Cannot resume applications after results process has started'
+                });
+            }
+            
+            drive.acceptingApplications = true;
+            await drive.save();
+            
+            res.json({ 
+                message: 'Applications resumed successfully',
                 isActive: drive.isActive,
                 acceptingApplications: drive.acceptingApplications
             });
@@ -812,6 +828,32 @@ router.post('/create-test-data', protectCoordinatorAuth, async (req, res) => {
     } catch (error) {
         console.error('Error creating test data:', error);
         res.status(500).json({ message: 'Failed to create test data' });
+    }
+});
+
+// Get results data for a drive
+router.get('/results/:driveId', protectCoordinatorAuth, async (req, res) => {
+    try {
+        const drive = await Drive.findById(req.params.driveId);
+        
+        if (!drive) {
+            return res.status(404).json({ message: 'Drive not found' });
+        }
+
+        // Prepare response data
+        const responseData = {
+            total_applicants: drive.applied_students.length,
+            total_rounds: drive.rounds.length,
+            rounds: drive.rounds,
+            round_results: drive.round_results || [],
+            current_result_round: drive.current_result_round || 1,
+            results_started: drive.results_started || false
+        };
+
+        res.json(responseData);
+    } catch (error) {
+        console.error('Error fetching results data:', error);
+        res.status(500).json({ error: 'Failed to fetch results data' });
     }
 });
 
