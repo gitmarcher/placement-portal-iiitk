@@ -266,7 +266,11 @@ const Main = ({ searchTerm = "", filters = {} }) => {
       // Graduation year filter (based on graduation_year in criteria)
       const matchesGraduationYear = (() => {
         // If no graduation year filter applied, show all
-        if (!filters.batch || filters.batch.trim() === "") {
+        if (
+          !filters.batch ||
+          typeof filters.batch !== "string" ||
+          filters.batch.trim() === ""
+        ) {
           return true;
         }
 
