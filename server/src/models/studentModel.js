@@ -67,7 +67,7 @@ const studentSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email_id: { type: String, required: true, unique: true, match: /\S+@\S+\.\S+/ },
     stream: { type: String, required: true },
-    // batch_year: { type: Number, required: true, minlength: 4, maxlength: 4 },
+    batch: { type: Number, required: true, min: 2000, max: 2050 }, // Added batch field
     phone_no: [{ type: String, required: true, minlength: 10, maxlength: 15 }],
     gender: { type: String, required: true, enum: ['Male', 'Female', 'Other'] },
     work_experience: [{ type: String, required: false }],

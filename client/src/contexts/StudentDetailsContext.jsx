@@ -37,6 +37,7 @@ const defaultStudentData = {
   name: "",
   email_id: "",
   stream: "",
+  batch: 0,
   phone_no: [],
   gender: "Male",
   work_experience: [],

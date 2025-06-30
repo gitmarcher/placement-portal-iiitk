@@ -180,7 +180,23 @@ const EligibilitySection = ({
               placeholder="e.g., 0 (no backlogs), 1, 2"
             />
           </div>
-          <div className="form-group">{/* Empty div for grid alignment */}</div>
+          <div className="form-group">
+            <label
+              htmlFor="criteria.eligible_batches"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Eligible Batches
+            </label>
+            <input
+              type="text"
+              name="criteria.eligible_batches"
+              id="criteria.eligible_batches"
+              className="w-full border border-[#DDDDDD] rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#EB3030] focus:border-[#EB3030] transition"
+              value={formData.criteria.eligible_batches || ""}
+              onChange={handleChange}
+              placeholder="e.g., 2022,2023,2024"
+            />
+          </div>
         </div>
       </div>
     </section>

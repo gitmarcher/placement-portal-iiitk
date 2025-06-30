@@ -25,6 +25,7 @@ const criteria = new mongoose.Schema({
     },
     work_experience_count: { type: Number, required: false, min: 0, default: 0 },
     max_backlogs: { type: Number, required: false, min: 0, default: 0 },
+    eligible_batches: { type: [Number], required: false }, // Added batch eligibility
 });
 
 const experienceSchema = new mongoose.Schema({
@@ -122,6 +123,7 @@ const drive = new mongoose.Schema({
         stream: { type: [String] },
         work_experience_count: { type: Number },
         max_backlogs: { type: Number },
+        eligible_batches: { type: [Number] },
     },
     required_details: {
         type: [String],

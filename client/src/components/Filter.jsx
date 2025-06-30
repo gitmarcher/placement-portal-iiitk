@@ -14,7 +14,7 @@ const Filter = ({
   const [locationSearch, setLocationSearch] = useState(
     initialFilters.locationSearch || ""
   );
-  const [batch, setBatch] = useState(initialFilters.batch || []);
+  const [batch, setBatch] = useState(initialFilters.batch || "");
 
   const toggleSelection = (option, selectedOptions, setSelectedOptions) => {
     let newSelection;
@@ -45,7 +45,7 @@ const Filter = ({
     setType([]);
     setLocation([]);
     setLocationSearch("");
-    setBatch([]);
+    setBatch("");
   };
 
   const hasActiveFilters =
@@ -54,7 +54,7 @@ const Filter = ({
     type.length > 0 ||
     location.length > 0 ||
     locationSearch ||
-    batch.length > 0;
+    batch;
 
   return (
     <div className="p-6 mx-5 w-full">
@@ -215,34 +215,17 @@ const Filter = ({
 
           {/* Batch Filter */}
           <div className="Batch w-full max-w-md">
-            <div className="flex flex-col items-center justify-center w-full p-2 rounded-lg border border-gray-500 relative">
+            <div className="relative flex items-center w-full mx-auto md:flex">
+              <input
+                type="text"
+                placeholder="Filter by batch (e.g., 2022,2023,2024)"
+                value={batch}
+                onChange={(e) => setBatch(e.target.value)}
+                className="w-full p-2 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-coral-red"
+              />
               <div className="absolute -top-3 left-2 bg-white px-2 text-sm text-black font-medium">
                 Batch
-                {batch.length > 0 && (
-                  <span className="ml-1 text-coral-red">({batch.length})</span>
-                )}
-              </div>
-              <div className="grid grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-2 p-2">
-                {availableBatches.map((option) => (
-                  <div
-                    key={option}
-                    className="flex items-center justify-center space-x-2 cursor-pointer text-gray-400 hover:text-gray-600"
-                    onClick={() => toggleSelection(option, batch, setBatch)}
-                  >
-                    <span>{option}</span>
-                    <div
-                      className={`w-4 h-4 border border-gray-500 rounded flex items-center justify-center ${
-                        batch.includes(option)
-                          ? "border-coral-red bg-coral-red"
-                          : "border-gray-500"
-                      }`}
-                    >
-                      {batch.includes(option) && (
-                        <FaCheck className="text-white text-xs" />
-                      )}
-                    </div>
-                  </div>
-                ))}
+                {batch && <span className="ml-1 text-coral-red">✓</span>}
               </div>
             </div>
           </div>
@@ -288,14 +271,11 @@ const Filter = ({
                     Location: {locationSearch}
                   </span>
                 )}
-                {batch.map((b) => (
-                  <span
-                    key={b}
-                    className="bg-orange-500 text-white px-2 py-1 rounded"
-                  >
-                    Batch {b}
+                {batch && (
+                  <span className="bg-orange-500 text-white px-2 py-1 rounded">
+                    Batch: {batch}
                   </span>
-                ))}
+                )}
               </div>
             </div>
           )}

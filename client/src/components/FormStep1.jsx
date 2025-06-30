@@ -85,6 +85,18 @@ const FormStep1 = ({ formData, setFormData }) => {
       <div className="mb-4">
         <input
           className="appearance-none border-b-2 border-gray-300 w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-blue-500"
+          name="batch"
+          value={formData.batch}
+          onChange={handleChange}
+          type="number"
+          min="2020"
+          max="2030"
+          placeholder="Batch Year (e.g., 2022)"
+        />
+      </div>
+      <div className="mb-4">
+        <input
+          className="appearance-none border-b-2 border-gray-300 w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-blue-500"
           name="phone_no[0]"
           value={formData.phone_no[0]}
           onChange={(e) =>

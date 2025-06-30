@@ -263,19 +263,40 @@ const Main = ({ searchTerm = "", filters = {} }) => {
               .includes(filters.locationSearch.toLowerCase())
           ));
 
-      // Batch filter (based on graduation year in criteria)
-      const matchesBatch =
-        !filters.batch ||
-        filters.batch.length === 0 ||
-        (drive.criteria &&
-          drive.criteria.graduation_year &&
-          Array.isArray(drive.criteria.graduation_year) &&
-          filters.batch.some((batch) =>
-            drive.criteria.graduation_year.includes(parseInt(batch))
-          )) ||
-        // If no specific graduation year criteria, show for all batches
-        !drive.criteria ||
-        !drive.criteria.graduation_year;
+      // Batch filter (based on eligible_batches in criteria)
+      const matchesBatch = (() => {
+        // If no batch filter applied, show all
+        if (!filters.batch || filters.batch.trim() === "") {
+          return true;
+        }
+
+        // Parse comma-separated batch years from filter input
+        const filterBatches = filters.batch
+          .split(",")
+          .map((batch) => parseInt(batch.trim(), 10))
+          .filter((batch) => !isNaN(batch));
+
+        // If no valid batch numbers in filter, show all
+        if (filterBatches.length === 0) {
+          return true;
+        }
+
+        // Check if drive has eligible_batches criteria
+        if (
+          drive.criteria &&
+          drive.criteria.eligible_batches &&
+          Array.isArray(drive.criteria.eligible_batches) &&
+          drive.criteria.eligible_batches.length > 0
+        ) {
+          // Check if any filter batch matches any eligible batch
+          return filterBatches.some((filterBatch) =>
+            drive.criteria.eligible_batches.includes(filterBatch)
+          );
+        }
+
+        // If no eligible_batches criteria set, show for all batches
+        return true;
+      })();
 
       return (
         matchesBasicSearch &&

@@ -816,7 +816,8 @@ function meetsCriteria(student, criteria) {
         (!criteria.cgpa || student.academics.cgpa >= criteria.cgpa) &&
         (!criteria.graduation_year || criteria.graduation_year.includes(student.academics.graduation_year)) &&
         (!criteria.stream || criteria.stream.includes('ALL') || criteria.stream.includes(student.stream)) &&
-        (!criteria.work_experience_count || student.work_experience.length >= criteria.work_experience_count)
+        (!criteria.work_experience_count || student.work_experience.length >= criteria.work_experience_count) &&
+        (!criteria.eligible_batches || criteria.eligible_batches.length === 0 || criteria.eligible_batches.includes(student.batch))
     );
 }
 
@@ -865,6 +866,11 @@ function validateStudentEligibility(student, drive) {
         errors.push(`Maximum ${criteria.max_backlogs} backlogs allowed. Current backlogs: ${student.academics.backlogs}`);
     }
 
+    // Check batch eligibility
+    if (criteria.eligible_batches && criteria.eligible_batches.length > 0 && !criteria.eligible_batches.includes(student.batch)) {
+        errors.push(`This drive is only open for batches: ${criteria.eligible_batches.join(', ')}. Your batch: ${student.batch}`);
+    }
+
     // Check required details
     const requiredDetails = drive.required_details || [];
     const missingDetails = [];
@@ -906,6 +912,9 @@ function validateStudentEligibility(student, drive) {
                 break;
             case 'github':
                 if (!student.github_profile) missingDetails.push('GitHub profile');
+                break;
+            case 'batch':
+                if (!student.batch) missingDetails.push('Batch year');
                 break;
         }
     });

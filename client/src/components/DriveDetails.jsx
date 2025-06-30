@@ -35,7 +35,8 @@ const DriveDetails = () => {
       cgpa: "",
       stream: [],
       work_experience_count: "",
-      max_backlogs: ""
+      max_backlogs: "",
+      eligible_batches: ""
     },
     required_details: [],
     custom_required_details: [],
@@ -120,6 +121,12 @@ const DriveDetails = () => {
         formData.criteria.stream.length > 0
           ? formData.criteria.stream
           : ["ALL"];
+      const eligibleBatchesArray = formData.criteria.eligible_batches
+        ? formData.criteria.eligible_batches
+            .split(",")
+            .map((batch) => parseInt(batch.trim(), 10))
+            .filter((batch) => !isNaN(batch))
+        : [];
 
       // Create FormData for multipart form submission
       const formDataToSend = new FormData();
@@ -161,7 +168,9 @@ const DriveDetails = () => {
         stream: streamArray,
         work_experience_count:
           Number(formData.criteria.work_experience_count) || undefined,
-        max_backlogs: Number(formData.criteria.max_backlogs) || undefined
+        max_backlogs: Number(formData.criteria.max_backlogs) || undefined,
+        eligible_batches:
+          eligibleBatchesArray.length > 0 ? eligibleBatchesArray : undefined
       };
       formDataToSend.append("criteria", JSON.stringify(criteriaData));
 
