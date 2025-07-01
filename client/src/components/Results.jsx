@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import API from "../API";
-import Toast from "./Toast";
+import { toastService } from "./Toast";
 
 const Results = ({ driveId, driveData }) => {
   const [resultsData, setResultsData] = useState(null);
@@ -8,18 +8,9 @@ const Results = ({ driveId, driveData }) => {
   const [eligibleStudents, setEligibleStudents] = useState([]);
   const [studentResults, setStudentResults] = useState({});
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [searchText, setSearchText] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [isOfferAcceptanceRound, setIsOfferAcceptanceRound] = useState(false);
-
-  const showToast = (message, type = "info") => {
-    setToast({ show: true, message, type });
-  };
-
-  const closeToast = () => {
-    setToast({ show: false, message: "", type: "" });
-  };
 
   // Fetch results data
   const fetchResultsData = async () => {
@@ -33,7 +24,7 @@ const Results = ({ driveId, driveData }) => {
       }
     } catch (error) {
       console.error("Error fetching results:", error);
-      showToast("Failed to fetch results data", "error");
+      toastService.error("Failed to fetch results data");
     }
   };
 
@@ -91,7 +82,7 @@ const Results = ({ driveId, driveData }) => {
       setStudentResults(initialResults);
     } catch (error) {
       console.error("Error fetching eligible students:", error);
-      showToast("Failed to fetch eligible students", "error");
+      toastService.error("Failed to fetch eligible students");
     }
   };
 
@@ -102,20 +93,19 @@ const Results = ({ driveId, driveData }) => {
   // Start results process
   const handleStartResults = async () => {
     if (driveData?.acceptingApplications !== false) {
-      showToast("Please end applications before starting results", "error");
+      toastService.error("Please end applications before starting results");
       return;
     }
 
     try {
       setLoading(true);
       await API.post(`/coordinator/drive/start-results/${driveId}`);
-      showToast("Results process started successfully!", "success");
+      toastService.success("Results process started successfully!");
       fetchResultsData();
     } catch (error) {
       console.error("Error starting results:", error);
-      showToast(
-        error.response?.data?.message || "Failed to start results",
-        "error"
+      toastService.error(
+        error.response?.data?.message || "Failed to start results"
       );
     } finally {
       setLoading(false);
@@ -137,9 +127,8 @@ const Results = ({ driveId, driveData }) => {
       ([_, status]) => !status
     );
     if (unselectedStudents.length > 0) {
-      showToast(
-        "Please select a status for all students before publishing results",
-        "error"
+      toastService.error(
+        "Please select a status for all students before publishing results"
       );
       return;
     }
@@ -154,11 +143,10 @@ const Results = ({ driveId, driveData }) => {
       );
 
       const isUpdate = editMode;
-      showToast(
+      toastService.success(
         isUpdate
           ? `Round ${currentRound} results updated successfully!`
-          : response.data.message,
-        "success"
+          : response.data.message
       );
 
       setEditMode(false);
@@ -170,9 +158,8 @@ const Results = ({ driveId, driveData }) => {
       }
     } catch (error) {
       console.error("Error publishing results:", error);
-      showToast(
-        error.response?.data?.message || "Failed to publish results",
-        "error"
+      toastService.error(
+        error.response?.data?.message || "Failed to publish results"
       );
     } finally {
       setLoading(false);
@@ -190,7 +177,7 @@ const Results = ({ driveId, driveData }) => {
   // Enable edit mode for published results
   const handleEditResults = () => {
     setEditMode(true);
-    showToast("Edit mode enabled. You can now modify the results.", "info");
+    toastService.info("Edit mode enabled. You can now modify the results.");
   };
 
   // Cancel edit mode
@@ -198,7 +185,7 @@ const Results = ({ driveId, driveData }) => {
     setEditMode(false);
     // Reload original results
     fetchEligibleStudents(currentRound);
-    showToast("Edit cancelled. Original results restored.", "info");
+    toastService.info("Edit cancelled. Original results restored.");
   };
 
   // Reset entire results process
@@ -214,13 +201,13 @@ const Results = ({ driveId, driveData }) => {
     try {
       setLoading(true);
       await API.post(`/coordinator/drive/reset-results/${driveId}`);
-      showToast("Results reset successfully!", "success");
+      toastService.success("Results reset successfully!");
       setEditMode(false);
       fetchResultsData();
       setStudentResults({});
     } catch (error) {
       console.error("Error resetting results:", error);
-      showToast("Failed to reset results", "error");
+      toastService.error("Failed to reset results");
     } finally {
       setLoading(false);
     }
@@ -285,8 +272,6 @@ const Results = ({ driveId, driveData }) => {
 
   return (
     <div className="font-ubuntu max-w-6xl mx-auto py-6">
-      <Toast toast={toast} closeToast={closeToast} />
-
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mx-4 mb-6">
         <div className="flex justify-between items-center">

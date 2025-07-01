@@ -1,5 +1,6 @@
 // server/src/controllers/authController.js
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const StudentCred = require('../models/studentCred.js');
 const CoordinatorCred = require('../models/coordinatorCred.js');
@@ -15,6 +16,55 @@ const logout = async(req, res) => {
     }catch{
         console.error('Error in logout controller:', error.message);
         res.status(500).json({error: "Internal Server error while logging out user"});        
+    }
+};
+
+// Verify JWT token and return user authentication status
+const verify = async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        
+        if (!token) {
+            return res.status(401).json({ 
+                isAuthenticated: false, 
+                message: "No token provided" 
+            });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        if (!decoded) {
+            return res.status(401).json({ 
+                isAuthenticated: false, 
+                message: "Invalid token" 
+            });
+        }
+
+        // Return user info without sensitive data
+        return res.status(200).json({
+            isAuthenticated: true,
+            userType: decoded.role,
+            user: {
+                id: decoded.userId,
+                username: decoded.username,
+                role: decoded.role
+            }
+        });
+
+    } catch (error) {
+        console.error('Error in verify controller:', error.message);
+        
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ 
+                isAuthenticated: false, 
+                message: "Token expired" 
+            });
+        }
+        
+        return res.status(401).json({ 
+            isAuthenticated: false, 
+            message: "Invalid token" 
+        });
     }
 };
 
@@ -44,29 +94,16 @@ const login = async (req, res) => {
         // Generate token with username and role
         generateTokenAndSetCookie(user._id.toString(), user.username, userType, res);
 
-        // Also send token in response for Authorization header method
-        const jwt = require('jsonwebtoken');
-        const token = jwt.sign({ 
-            userId: user._id.toString(),
-            username: user.username,
-            role: userType
-        }, process.env.JWT_SECRET, { expiresIn: "15d" });
-
+        // Don't send token in response anymore - only use secure cookies
         if (!profile) {
             return res.status(201).json({
-                _id: user._id,
-                username: user.username,
                 userType,
-                token: token, // Include token in response
                 message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} profile incomplete, please complete your registration`,
             });
         }
 
         return res.status(200).json({
-            _id: user._id,
-            username: user.username,
             userType,
-            token: token, // Include token in response
             message: "User logged in successfully",
         });
 
@@ -79,5 +116,6 @@ const login = async (req, res) => {
 // export
 module.exports = {
     login,
-    logout
+    logout,
+    verify
 };

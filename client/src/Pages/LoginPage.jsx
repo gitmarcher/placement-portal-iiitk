@@ -48,7 +48,6 @@ const LoginPage = () => {
     }
 
     setIsLoading(true);
-    toastService.info("Logging you in...");
 
     try {
       // Attempt login with provided credentials
@@ -58,23 +57,20 @@ const LoginPage = () => {
         userType
       );
 
-      console.log("res:", response);
+      console.log("Login response:", response);
 
       if (response.login) {
-        // Store user credentials in context
-        updateStudentCreds(response.userId, response.username, userType);
+        // Store only user type in secure context (no sensitive data in localStorage)
+        updateStudentCreds(response.userType);
 
-        console.log("Stored credentials:", {
-          creds: response.userId,
-          username: response.username,
-          type: userType
-        });
+        console.log(
+          "Authentication successful for user type:",
+          response.userType
+        );
 
         // Route navigation based on user type and profile completion
         if (userType === "student") {
-          console.log("pf:", response.profileComplete);
           if (!response.profileComplete) {
-            console.log("hello");
             toastService.info("Profile completion required");
             navigate("/complete-profile");
           } else {

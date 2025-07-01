@@ -12,18 +12,14 @@ export const login = async (email, password, userType) => {
         
         const data = response.data;
         
-        // Store token in localStorage if provided
-        if (data.token) {
-            localStorage.setItem('authToken', data.token);
-        }
+        // No need to store token - it's automatically set as httpOnly cookie by backend
+        // Backend will handle JWT token in secure cookies
         
         // Handle profile incomplete case (status 201)
         if (response.status === 201) {
             return {
                 login: true,
                 profileComplete: false,
-                userId: data._id,
-                username: data.username,
                 userType: data.userType,
                 message: data.message,
             };
@@ -33,8 +29,6 @@ export const login = async (email, password, userType) => {
         return {
             login: true,
             profileComplete: true,
-            userId: data._id,
-            username: data.username,
             userType: data.userType,
             message: data.message || "Login successful"
         };
@@ -81,8 +75,7 @@ export const logout = async () => {
         const response = await api.post("/auth/logout");
         const data = response.data;
         
-        // Clear token from localStorage
-        localStorage.removeItem('authToken');
+        // No need to clear localStorage - backend clears the httpOnly cookie
         
         return {
             success: response.status === 200,
@@ -91,8 +84,7 @@ export const logout = async () => {
     } catch (error) {
         console.error("Logout error:", error);
         
-        // Clear token even if logout request fails
-        localStorage.removeItem('authToken');
+        // Don't clear any localStorage - there shouldn't be any sensitive data stored
         
         if (error.response) {
             const { status, data } = error.response;
@@ -105,6 +97,37 @@ export const logout = async () => {
         return {
             success: false,
             message: "An error occurred during logout"
+        };
+    }
+};
+
+// Check authentication status by making a request to backend
+// Backend will verify JWT cookie and return user info
+export const checkAuthStatus = async () => {
+    try {
+        const response = await api.get("/auth/verify");
+        return {
+            isAuthenticated: true,
+            userType: response.data.userType,
+            user: response.data.user
+        };
+    } catch (error) {
+        // Don't log 401 errors as they're expected when user isn't logged in
+        if (error.response?.status === 401) {
+            // This is normal - user just isn't authenticated
+            return {
+                isAuthenticated: false,
+                userType: null,
+                user: null
+            };
+        }
+        
+        // Log other errors (network issues, server errors, etc.)
+        console.error("Unexpected auth verification error:", error);
+        return {
+            isAuthenticated: false,
+            userType: null,
+            user: null
         };
     }
 };

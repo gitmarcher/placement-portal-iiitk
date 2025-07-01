@@ -338,6 +338,8 @@ const StudentDrive = () => {
                           driveId={selectedDrive._id}
                           experiences={experiences}
                           setExperiences={setExperiences}
+                          hasApplied={selectedDrive.hasApplied}
+                          isActive={selectedDrive.isActive}
                         />
                       </>
                     )}

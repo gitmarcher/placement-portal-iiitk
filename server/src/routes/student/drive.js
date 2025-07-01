@@ -587,19 +587,6 @@ router.post('/add-experience/:driveId', protectRoute, async (req, res) => {
             return res.status(404).send('Student not found');
         }
 
-        // Only require applied check for students who are not coordinators
-        let hasApplied = true;
-        if (req.user.type !== 'coordinator') {
-            // Check if student has applied for this drive
-            hasApplied = drive.applied_students.some(app => 
-                app.student && student._id && app.student.equals(student._id)
-            );
-        }
-
-        if (!hasApplied) {
-            return res.status(403).send('You must apply for this drive before sharing an experience');
-        }
-
         const { comment } = req.body;
 
         if (!comment || comment.trim() === '') {
@@ -865,8 +852,6 @@ function validateStudentEligibility(student, drive) {
         errors.push(`Maximum ${criteria.max_backlogs} backlogs allowed. Current backlogs: ${student.academics.backlogs}`);
     }
 
-
-
     // Check required details
     const requiredDetails = drive.required_details || [];
     const missingDetails = [];
@@ -909,7 +894,6 @@ function validateStudentEligibility(student, drive) {
             case 'github':
                 if (!student.github_profile) missingDetails.push('GitHub profile');
                 break;
-
         }
     });
 

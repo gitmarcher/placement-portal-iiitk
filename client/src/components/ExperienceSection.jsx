@@ -8,7 +8,9 @@ import { useStudentDetails } from "../contexts/StudentDetailsContext";
 export default function ExperienceSection({
   driveId,
   experiences = [],
-  setExperiences
+  setExperiences,
+  hasApplied = false,
+  isActive = true
 }) {
   const [textAreaInput, setTextAreaInput] = useState("");
   const [addExperienceClicked, setAddExperienceClicked] = useState(false);
@@ -16,8 +18,8 @@ export default function ExperienceSection({
 
   // Get student context
   const { studentData } = useStudentDetails();
-  const { studentCreds } = useContext(StudentCredContext);
-  const userType = studentCreds?.creds?.type || "student";
+  const { authState, getUserRole } = useContext(StudentCredContext);
+  const userType = getUserRole() || "student";
 
   // Ensure experiences is always an array
   const experiencesArray = Array.isArray(experiences) ? experiences : [];
@@ -57,10 +59,14 @@ export default function ExperienceSection({
       }
     } catch (error) {
       console.error("Error sharing experience:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data ||
-        "Failed to share your experience";
+      let errorMessage = "Failed to share your experience";
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data) {
+        errorMessage = error.response.data;
+      }
+
       toastService.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -136,6 +142,47 @@ export default function ExperienceSection({
               <div className="mb-6">
                 <textarea
                   placeholder="Share your experience with this drive..."
+                  value={textAreaInput}
+                  onChange={handleTextAreaChange}
+                  className="w-full p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-coral-red focus:border-coral-red"
+                  rows={4}
+                />
+                <div className="flex gap-3 mt-2">
+                  <button
+                    className="px-4 py-2 bg-coral-red text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+                    onClick={handleSubmitExperience}
+                    disabled={isSubmitting || !textAreaInput.trim()}
+                  >
+                    {isSubmitting ? "Posting..." : "Post Experience"}
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                    onClick={() => {
+                      setAddExperienceClicked(false);
+                      setTextAreaInput("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {userType === "coordinator" && (
+          <>
+            {!addExperienceClicked ? (
+              <button
+                className="inline-block mb-6 text-coral-red hover:text-red-700 font-medium"
+                onClick={() => setAddExperienceClicked(true)}
+              >
+                + Add Experience (as Coordinator)
+              </button>
+            ) : (
+              <div className="mb-6">
+                <textarea
+                  placeholder="Share an experience or insight about this drive..."
                   value={textAreaInput}
                   onChange={handleTextAreaChange}
                   className="w-full p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-coral-red focus:border-coral-red"

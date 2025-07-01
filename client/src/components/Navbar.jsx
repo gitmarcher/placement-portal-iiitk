@@ -25,9 +25,8 @@ const Navbar = () => {
       const response = await logout();
 
       if (response.success) {
-        // Clear student credentials from context and localStorage
+        // Clear authentication state from context (no localStorage operations)
         updateStudentCreds("", "", "");
-        localStorage.removeItem("studentCreds");
 
         toastService.success(response.message || "Logged out successfully");
         navigate("/login"); // Redirect to login page

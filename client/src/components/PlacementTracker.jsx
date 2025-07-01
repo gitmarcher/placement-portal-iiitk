@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import API from "../API";
-import Toast from "./Toast";
+import { toastService } from "./Toast";
 
 const PlacementTracker = () => {
   const [selectedBatch, setSelectedBatch] = useState("");
@@ -10,15 +10,6 @@ const PlacementTracker = () => {
   const [showStudentDetails, setShowStudentDetails] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: "", type: "" });
-
-  const showToast = (message, type = "info") => {
-    setToast({ show: true, message, type });
-  };
-
-  const closeToast = () => {
-    setToast({ show: false, message: "", type: "" });
-  };
 
   // Fetch available batches on component mount
   useEffect(() => {
@@ -31,7 +22,7 @@ const PlacementTracker = () => {
       setAvailableBatches(response.data.batches);
     } catch (error) {
       console.error("Error fetching batches:", error);
-      showToast("Failed to fetch available batches", "error");
+      toastService.error("Failed to fetch available batches");
     }
   };
 
@@ -44,7 +35,7 @@ const PlacementTracker = () => {
       setStatistics(response.data);
     } catch (error) {
       console.error("Error fetching statistics:", error);
-      showToast("Failed to fetch placement statistics", "error");
+      toastService.error("Failed to fetch placement statistics");
     } finally {
       setLoading(false);
     }
@@ -61,7 +52,7 @@ const PlacementTracker = () => {
       setStudentDetails(response.data);
     } catch (error) {
       console.error("Error fetching student details:", error);
-      showToast("Failed to fetch student details", "error");
+      toastService.error("Failed to fetch student details");
     } finally {
       setLoading(false);
     }
@@ -110,8 +101,6 @@ const PlacementTracker = () => {
 
   return (
     <div className="font-ubuntu max-w-7xl mx-auto py-6">
-      <Toast toast={toast} closeToast={closeToast} />
-
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mx-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

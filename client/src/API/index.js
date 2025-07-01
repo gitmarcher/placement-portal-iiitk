@@ -7,22 +7,11 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Enable sending/receiving cookies
+  withCredentials: true, // Enable sending/receiving cookies - this is all we need for JWT auth
 });
 
-// Add request interceptor to include auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// No need for request interceptor - JWT cookies are automatically sent
+// The backend middleware will read JWT from cookies, not Authorization headers
 
 export default api;
 
