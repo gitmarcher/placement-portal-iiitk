@@ -526,6 +526,62 @@ router.get('/application-status/:driveId', protectRoute, async (req, res) => {
     }
 });
 
+// Helper function to determine student's current status based on round results
+function getStudentStatusFromRoundResults(studentId, roundResults, totalRounds) {
+    if (!roundResults || roundResults.length === 0) {
+        return "Applied";
+    }
+
+    const studentIdStr = studentId.toString();
+    
+    // Sort round results by round number to check in order
+    const sortedResults = roundResults
+        .filter(result => result.is_published)
+        .sort((a, b) => a.round_number - b.round_number);
+
+    let latestStatus = "Applied";
+    let latestRound = 0;
+    let hasCompletedAllRounds = false;
+
+    for (const roundResult of sortedResults) {
+        
+        // Check offer acceptance results first (highest priority)
+        if (roundResult.offer_accepted_students && roundResult.offer_accepted_students.some(id => id.toString() === studentIdStr)) {
+            return "Offer Accepted";
+        }
+        
+        if (roundResult.offer_rejected_students && roundResult.offer_rejected_students.some(id => id.toString() === studentIdStr)) {
+            return "Offer Rejected";
+        }
+        
+        // Check if student was rejected in this round
+        if (roundResult.rejected_students && roundResult.rejected_students.some(id => id.toString() === studentIdStr)) {
+            return `Rejected in round ${roundResult.round_number}`;
+        }
+        
+        // Check if student was shortlisted/selected in this round
+        if (roundResult.selected_students && roundResult.selected_students.some(id => id.toString() === studentIdStr)) {
+            latestRound = roundResult.round_number;
+            
+            // Check if this is the final round
+            if (roundResult.round_number === totalRounds) {
+                hasCompletedAllRounds = true;
+                latestStatus = "Offer Extended";
+            } else {
+                latestStatus = `Shortlisted for round ${roundResult.round_number + 1}`;
+            }
+        }
+        
+        // Check if student was waitlisted in this round
+        if (roundResult.waitlisted_students && roundResult.waitlisted_students.some(id => id.toString() === studentIdStr)) {
+            latestStatus = `Waitlisted in round ${roundResult.round_number}`;
+            latestRound = roundResult.round_number;
+        }
+    }
+
+    return latestStatus;
+}
+
 // Get application details for a specific drive (including resume link)
 router.get('/application-details/:driveId', protectRoute, async (req, res) => {
     try {
@@ -549,12 +605,15 @@ router.get('/application-details/:driveId', protectRoute, async (req, res) => {
             return res.status(404).json({ message: 'Application not found' });
         }
 
+        // Determine current status based on round results
+        const actualStatus = getStudentStatusFromRoundResults(student._id, drive.round_results, drive.rounds.length);
+
         res.status(200).json({
             application: {
                 resumeLink: application.resumeLink,
                 phone: application.phone,
                 applicationTimestamp: application.applicationTimestamp,
-                current_status: application.current_status,
+                current_status: actualStatus,
                 last_status_update: application.last_status_update,
                 custom_field_responses: application.custom_field_responses || [],
                 custom_question_responses: application.custom_question_responses || []

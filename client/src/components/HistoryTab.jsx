@@ -36,7 +36,7 @@ const HistoryTab = ({ studentData }) => {
                 const appResponse = await api.get(
                   `/student/drive/application-details/${application.drive_id}`
                 );
-                applicationDetails = appResponse.data.applicationDetails;
+                applicationDetails = appResponse.data.application;
               } catch (appError) {
                 console.log(
                   `No application details found for drive ${application.drive_id}`
@@ -113,9 +113,29 @@ const HistoryTab = ({ studentData }) => {
   const getStatusBadge = (status, isActive) => {
     let badgeClasses = "px-2 py-1 rounded-full text-xs font-medium ";
 
-    if (!isActive && status !== "Final Selected") {
+    if (
+      !isActive &&
+      status !== "Final Selected" &&
+      status !== "Offer Rejected"
+    ) {
       badgeClasses += "bg-gray-100 text-gray-600";
       return <span className={badgeClasses}>Drive Ended</span>;
+    }
+
+    // Handle new round-based status formats
+    if (status.startsWith("Shortlisted for round")) {
+      badgeClasses += "bg-green-100 text-green-800";
+      return <span className={badgeClasses}>{status}</span>;
+    }
+
+    if (status.startsWith("Rejected in round")) {
+      badgeClasses += "bg-red-100 text-red-800";
+      return <span className={badgeClasses}>{status}</span>;
+    }
+
+    if (status.startsWith("Waitlisted in round")) {
+      badgeClasses += "bg-yellow-100 text-yellow-800";
+      return <span className={badgeClasses}>{status}</span>;
     }
 
     switch (status) {
@@ -132,7 +152,16 @@ const HistoryTab = ({ studentData }) => {
         badgeClasses += "bg-indigo-100 text-indigo-800";
         break;
       case "Final Selected":
-        badgeClasses += "bg-yellow-100 text-yellow-800";
+        badgeClasses += "bg-emerald-100 text-emerald-800";
+        break;
+      case "Offer Extended":
+        badgeClasses += "bg-purple-100 text-purple-800";
+        break;
+      case "Offer Accepted":
+        badgeClasses += "bg-emerald-100 text-emerald-800";
+        break;
+      case "Offer Rejected":
+        badgeClasses += "bg-red-100 text-red-800";
         break;
       case "Shortlisted":
         badgeClasses += "bg-green-100 text-green-800";

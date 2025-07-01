@@ -150,11 +150,76 @@ const Results = ({ driveId, driveData }) => {
       );
 
       setEditMode(false);
-      fetchResultsData();
 
-      // Reset student results for next round only if it's a new publish
-      if (!isUpdate) {
-        setStudentResults({});
+      // Store the current working round before fetching data
+      const workingRound = currentRound;
+
+      try {
+        // Fetch updated results data first
+        const response = await API.get(`/coordinator/drive/results/${driveId}`);
+        setResultsData(response.data);
+
+        // Stay on the same round the user was working on
+        setCurrentRound(workingRound);
+
+        // Now fetch eligible students with the updated results data
+        const studentsResponse = await API.get(
+          `/coordinator/drive/round-eligible/${driveId}/${workingRound}`
+        );
+        setEligibleStudents(studentsResponse.data.eligible_students);
+        setIsOfferAcceptanceRound(
+          studentsResponse.data.is_offer_acceptance || false
+        );
+
+        // Load the newly published results for display
+        const initialResults = {};
+        const roundResult = response.data.round_results?.find(
+          (r) => r.round_number === workingRound
+        );
+
+        studentsResponse.data.eligible_students.forEach((student) => {
+          if (roundResult?.is_published) {
+            if (studentsResponse.data.is_offer_acceptance) {
+              // For offer acceptance round
+              if (
+                roundResult.offer_accepted_students?.includes(
+                  student.student_id
+                )
+              ) {
+                initialResults[student.student_id] = "accepted";
+              } else if (
+                roundResult.offer_rejected_students?.includes(
+                  student.student_id
+                )
+              ) {
+                initialResults[student.student_id] = "rejected";
+              } else {
+                initialResults[student.student_id] = "";
+              }
+            } else {
+              // For regular rounds
+              if (roundResult.selected_students?.includes(student.student_id)) {
+                initialResults[student.student_id] = "shortlisted";
+              } else if (
+                roundResult.rejected_students?.includes(student.student_id)
+              ) {
+                initialResults[student.student_id] = "rejected";
+              } else if (
+                roundResult.waitlisted_students?.includes(student.student_id)
+              ) {
+                initialResults[student.student_id] = "waitlisted";
+              } else {
+                initialResults[student.student_id] = "";
+              }
+            }
+          } else {
+            initialResults[student.student_id] = "";
+          }
+        });
+        setStudentResults(initialResults);
+      } catch (refreshError) {
+        console.error("Error refreshing data after publish:", refreshError);
+        toastService.error("Results published but failed to refresh display");
       }
     } catch (error) {
       console.error("Error publishing results:", error);
@@ -221,7 +286,9 @@ const Results = ({ driveId, driveData }) => {
     (r) => r.round_number === currentRound
   )?.is_published;
   const canPublishCurrentRound =
-    currentRound <= resultsData.current_result_round && !isRoundPublished;
+    (currentRound <= resultsData.current_result_round ||
+      isOfferAcceptanceRound) &&
+    !isRoundPublished;
   const canEditResults = isRoundPublished && !editMode;
   const isInEditMode = isRoundPublished && editMode;
 

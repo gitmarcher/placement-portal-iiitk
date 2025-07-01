@@ -37,6 +37,19 @@ const Applicants = ({ driveId }) => {
   );
 
   const getStatusBadgeClass = (status) => {
+    // Handle new round-based status formats
+    if (status.startsWith("Shortlisted for round")) {
+      return "bg-green-100 text-green-800";
+    }
+
+    if (status.startsWith("Rejected in round")) {
+      return "bg-red-100 text-red-800";
+    }
+
+    if (status.startsWith("Waitlisted in round")) {
+      return "bg-yellow-100 text-yellow-800";
+    }
+
     switch (status) {
       case "Applied":
         return "bg-blue-100 text-blue-800";
@@ -47,7 +60,13 @@ const Applicants = ({ driveId }) => {
       case "Interview II Selected":
         return "bg-indigo-100 text-indigo-800";
       case "Final Selected":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-emerald-100 text-emerald-800";
+      case "Offer Extended":
+        return "bg-purple-100 text-purple-800";
+      case "Offer Accepted":
+        return "bg-emerald-100 text-emerald-800";
+      case "Offer Rejected":
+        return "bg-red-100 text-red-800";
       case "Rejected":
         return "bg-red-100 text-red-800";
       default:

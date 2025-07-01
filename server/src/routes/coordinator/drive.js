@@ -8,6 +8,62 @@ const Student  = require('../../models/studentModel');
 const ExcelJS = require('exceljs');
 const fs = require('fs');
 const path = require('path');
+
+// Helper function to determine student's current status based on round results
+function getStudentStatusFromRoundResults(studentId, roundResults, totalRounds) {
+    if (!roundResults || roundResults.length === 0) {
+        return "Applied";
+    }
+
+    const studentIdStr = studentId.toString();
+    
+    // Sort round results by round number to check in order
+    const sortedResults = roundResults
+        .filter(result => result.is_published)
+        .sort((a, b) => a.round_number - b.round_number);
+
+    let latestStatus = "Applied";
+    let latestRound = 0;
+    let hasCompletedAllRounds = false;
+
+    for (const roundResult of sortedResults) {
+        
+        // Check offer acceptance results first (highest priority)
+        if (roundResult.offer_accepted_students && roundResult.offer_accepted_students.some(id => id.toString() === studentIdStr)) {
+            return "Offer Accepted";
+        }
+        
+        if (roundResult.offer_rejected_students && roundResult.offer_rejected_students.some(id => id.toString() === studentIdStr)) {
+            return "Offer Rejected";
+        }
+        
+        // Check if student was rejected in this round
+        if (roundResult.rejected_students && roundResult.rejected_students.some(id => id.toString() === studentIdStr)) {
+            return `Rejected in round ${roundResult.round_number}`;
+        }
+        
+        // Check if student was shortlisted/selected in this round
+        if (roundResult.selected_students && roundResult.selected_students.some(id => id.toString() === studentIdStr)) {
+            latestRound = roundResult.round_number;
+            
+            // Check if this is the final round
+            if (roundResult.round_number === totalRounds) {
+                hasCompletedAllRounds = true;
+                latestStatus = "Offer Extended";
+            } else {
+                latestStatus = `Shortlisted for round ${roundResult.round_number + 1}`;
+            }
+        }
+        
+        // Check if student was waitlisted in this round
+        if (roundResult.waitlisted_students && roundResult.waitlisted_students.some(id => id.toString() === studentIdStr)) {
+            latestStatus = `Waitlisted in round ${roundResult.round_number}`;
+            latestRound = roundResult.round_number;
+        }
+    }
+
+    return latestStatus;
+}
 const multer = require('multer');
 
 // Configure multer for JD file uploads
@@ -279,6 +335,9 @@ router.get('/applications/:driveId', protectCoordinatorAuth, async (req, res) =>
             try {
                 const student = await Student.findById(applicant.student);
                 if (student) {
+                    // Determine current status based on round results
+                    const actualStatus = getStudentStatusFromRoundResults(applicant.student, drive.round_results, drive.rounds.length);
+                    
                     populatedApplicants.push({
                         student_id: applicant.student,
                         name: student.name ?? 'N/A',
@@ -288,7 +347,7 @@ router.get('/applications/:driveId', protectCoordinatorAuth, async (req, res) =>
                         cgpa: student.academics?.cgpa ?? 'N/A',
                         resume_link: applicant.resumeLink ?? student.resume_link ?? 'N/A',
                         applied_at: applicant.applicationTimestamp ?? 'N/A',
-                        current_status: applicant.current_status ?? 'Applied',
+                        current_status: actualStatus,
                         application_date: applicant.applicationTimestamp ?? 'N/A',
                         tenth_percentage: student.academics?.tenth_percentage ?? 'N/A',
                         twelfth_percentage: student.academics?.twelfth_percentage ?? 'N/A',
