@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { EditorState, ContentState, convertFromHTML } from "draft-js";
+import {
+  EditorState,
+  ContentState,
+  convertFromHTML,
+  convertToRaw
+} from "draft-js";
+import draftToHtml from "draftjs-to-html";
 import Navbar from "../components/Navbar";
 import { toastService } from "../components/Toast";
 import DriveBasicDetails from "../components/DriveBasicDetails";
@@ -162,8 +168,10 @@ const EditDrive = () => {
         .map((loc) => loc.trim())
         .filter((loc) => loc.length > 0);
 
-      // Get HTML content from editor
-      const aboutContent = editorState.getCurrentContent().getPlainText();
+      // Convert Draft.js content to HTML to preserve formatting
+      const contentState = editorState.getCurrentContent();
+      const rawContentState = convertToRaw(contentState);
+      const aboutContent = draftToHtml(rawContentState);
 
       const submitData = {
         ...formData,
