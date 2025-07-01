@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import ExperienceCard from "./ExperienceCard";
 import { toastService } from "./Toast";
-import axios from "axios";
+import api from "../API/index.js";
 import { StudentCredContext } from "../contexts/StudentCredContext";
 import { useStudentDetails } from "../contexts/StudentDetailsContext";
 
@@ -39,14 +39,14 @@ export default function ExperienceSection({
     try {
       setIsSubmitting(true);
 
-      let apiEndpoint = `/api/student/drive/add-experience/${driveId}`;
+      let apiEndpoint = `student/drive/add-experience/${driveId}`;
 
       // Use the appropriate API endpoint based on user type
       if (userType === "coordinator") {
-        apiEndpoint = `/api/coordinator/drive/add-experience/${driveId}`;
+        apiEndpoint = `coordinator/drive/add-experience/${driveId}`;
       }
 
-      const response = await axios.post(apiEndpoint, {
+      const response = await api.post(apiEndpoint, {
         comment: textAreaInput
       });
 
@@ -59,6 +59,7 @@ export default function ExperienceSection({
       }
     } catch (error) {
       console.error("Error sharing experience:", error);
+
       let errorMessage = "Failed to share your experience";
 
       if (error.response?.data?.message) {
@@ -76,8 +77,8 @@ export default function ExperienceSection({
   // Like an experience
   const handleLikeExperience = async (experienceId) => {
     try {
-      const response = await axios.post(
-        `/api/student/drive/like-experience/${driveId}/${experienceId}`
+      const response = await api.post(
+        `student/drive/like-experience/${driveId}/${experienceId}`
       );
 
       if (response.status === 200) {
@@ -104,8 +105,8 @@ export default function ExperienceSection({
     }
 
     try {
-      const response = await axios.delete(
-        `/api/coordinator/drive/experience/${driveId}/${experienceId}`
+      const response = await api.delete(
+        `coordinator/drive/experience/${driveId}/${experienceId}`
       );
 
       if (response.status === 200) {

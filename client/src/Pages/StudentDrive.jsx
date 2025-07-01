@@ -12,7 +12,7 @@ import { StudentCredContext } from "../contexts/StudentCredContext";
 import { useStudentDetails } from "../contexts/StudentDetailsContext";
 import { fetchStudentDetails } from "../API/fetchStudentDetails";
 import { fetchDrives } from "../API/getDrives"; // Add this import
-import axios from "axios";
+import api from "../API/index.js";
 
 // StudentDrive component manages the student job drive interface
 const StudentDrive = () => {
@@ -105,8 +105,8 @@ const StudentDrive = () => {
       if (!selectedCard) return;
 
       try {
-        const response = await axios.get(
-          `/api/student/drive/experiences/${selectedCard}`
+        const response = await api.get(
+          `student/drive/experiences/${selectedCard}`
         );
         setExperiences(response.data);
       } catch (error) {
