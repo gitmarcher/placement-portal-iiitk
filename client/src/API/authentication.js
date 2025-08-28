@@ -101,6 +101,60 @@ export const logout = async () => {
     }
 };
 
+export const signup = async (username, password) => {
+    try {
+        const response = await api.post("/auth/signup", { 
+            username, 
+            password 
+        });
+        
+        const data = response.data;
+        
+        // Handle successful signup (status 201) - user is automatically logged in
+        return {
+            success: true,
+            profileComplete: false, // New users need to complete profile
+            userType: data.userType,
+            message: data.message || "Registration successful"
+        };
+    } catch (error) {
+        console.error("Signup error:", error);
+        
+        // Handle different error scenarios
+        if (error.response) {
+            const { status, data } = error.response;
+            
+            switch (status) {
+                case 400:
+                    return {
+                        success: false,
+                        message: data.error || "Invalid signup data"
+                    };
+                case 500:
+                    return {
+                        success: false,
+                        message: "Server error. Please try again later."
+                    };
+                default:
+                    return {
+                        success: false,
+                        message: data.error || "An error occurred. Please try again."
+                    };
+            }
+        } else if (error.request) {
+            return {
+                success: false,
+                message: "Network error. Please check your connection."
+            };
+        } else {
+            return {
+                success: false,
+                message: "An error occurred. Please try again."
+            };
+        }
+    }
+};
+
 // Check authentication status by making a request to backend
 // Backend will verify JWT cookie and return user info
 export const checkAuthStatus = async () => {

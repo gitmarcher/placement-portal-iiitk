@@ -116,17 +116,19 @@ const JobCard = ({ job }) => (
 );
 
 const Main = ({ searchTerm = "", filters = {} }) => {
-  // Default searchTerm to empty string and filters to empty object
   const [drives, setDrives] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
+  const [totalDrives, setTotalDrives] = useState(0);
+  const [filteredCount, setFilteredCount] = useState(0);
+
   const observer = useRef();
 
   const lastDriveElementRef = useCallback(
     (node) => {
-      if (loading || initialLoading) return;
+      if (loading) return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
@@ -135,18 +137,26 @@ const Main = ({ searchTerm = "", filters = {} }) => {
       });
       if (node) observer.current.observe(node);
     },
-    [loading, initialLoading, hasMore]
+    [loading, hasMore]
   );
+
+  useEffect(() => {
+    // When filters or search term change, reset page to 1 and clear drives
+    setPage(1);
+    setDrives([]);
+  }, [searchTerm, filters]);
 
   useEffect(() => {
     const loadDrives = async () => {
       setLoading(true);
       try {
-        const data = await fetchDrives(page);
+        const data = await fetchDrives(page, 10, filters, searchTerm);
         setDrives((prevDrives) =>
           page === 1 ? data.drives : [...prevDrives, ...data.drives]
         );
         setHasMore(page < data.totalPages);
+        setTotalDrives(data.totalDrives);
+        setFilteredCount(data.totalDrives);
       } catch (error) {
         console.error("Error loading drives:", error);
       } finally {
@@ -156,168 +166,9 @@ const Main = ({ searchTerm = "", filters = {} }) => {
     };
 
     loadDrives();
-  }, [page]);
+  }, [page, searchTerm, filters]);
 
-  // Apply advanced filtering logic
-  const applyFilters = (drives) => {
-    return drives.filter((drive) => {
-      // Basic search filter (from navbar search)
-      const matchesBasicSearch =
-        searchTerm.trim() === "" ||
-        (drive.company_name || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (drive.type_of_role || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (drive.location &&
-          Array.isArray(drive.location) &&
-          drive.location.some((loc) =>
-            (loc || "").toLowerCase().includes(searchTerm.toLowerCase())
-          ));
-
-      // Role/Company search filter (from filter component)
-      const matchesRoleSearch =
-        !filters.searchRole ||
-        (drive.company_name || "")
-          .toLowerCase()
-          .includes(filters.searchRole.toLowerCase()) ||
-        (drive.drive_name || "")
-          .toLowerCase()
-          .includes(filters.searchRole.toLowerCase()) ||
-        (drive.type_of_role || "")
-          .toLowerCase()
-          .includes(filters.searchRole.toLowerCase());
-
-      // Status filter (live vs past)
-      const matchesStatus =
-        !filters.status ||
-        filters.status.length === 0 ||
-        filters.status.some((status) => {
-          if (status === "live") {
-            return (
-              drive.isActive &&
-              drive.acceptingApplications &&
-              new Date(drive.deadline) > new Date()
-            );
-          } else if (status === "past") {
-            return (
-              !drive.isActive ||
-              !drive.acceptingApplications ||
-              new Date(drive.deadline) <= new Date()
-            );
-          }
-          return false;
-        });
-
-      // Type filter (Intern, Intern + PPO, Fulltime)
-      const matchesType =
-        !filters.type ||
-        filters.type.length === 0 ||
-        filters.type.some((type) => {
-          const driveType = (drive.type_of_role || "").toLowerCase();
-          const filterType = type.toLowerCase();
-
-          if (filterType === "intern") {
-            return driveType === "intern";
-          } else if (filterType === "fulltime") {
-            return driveType === "fulltime";
-          } else if (filterType === "intern + ppo") {
-            return driveType === "intern + ppo";
-          }
-          return driveType.includes(filterType);
-        });
-
-      // Location filter
-      const matchesLocation =
-        ((!filters.location || filters.location.length === 0) &&
-          !filters.locationSearch) ||
-        (filters.location &&
-          filters.location.length > 0 &&
-          filters.location.some((locType) => {
-            const driveLocations = drive.location || [];
-            if (locType === "Remote") {
-              return driveLocations.some(
-                (loc) =>
-                  (loc || "").toLowerCase().includes("remote") ||
-                  (loc || "").toLowerCase().includes("work from home") ||
-                  (loc || "").toLowerCase().includes("wfh")
-              );
-            } else if (locType === "On-site") {
-              return driveLocations.some(
-                (loc) =>
-                  loc &&
-                  !(loc || "").toLowerCase().includes("remote") &&
-                  !(loc || "").toLowerCase().includes("work from home") &&
-                  !(loc || "").toLowerCase().includes("wfh")
-              );
-            }
-            return false;
-          })) ||
-        (filters.locationSearch &&
-          drive.location &&
-          Array.isArray(drive.location) &&
-          drive.location.some((loc) =>
-            (loc || "")
-              .toLowerCase()
-              .includes(filters.locationSearch.toLowerCase())
-          ));
-
-      // Graduation year filter (based on graduation_year in criteria)
-      const matchesGraduationYear = (() => {
-        // If no graduation year filter applied, show all
-        if (
-          !filters.batch ||
-          typeof filters.batch !== "string" ||
-          filters.batch.trim() === ""
-        ) {
-          return true;
-        }
-
-        // Parse comma-separated graduation years from filter input
-        const filterYears = filters.batch
-          .split(",")
-          .map((year) => parseInt(year.trim(), 10))
-          .filter((year) => !isNaN(year));
-
-        // If no valid graduation years in filter, show all
-        if (filterYears.length === 0) {
-          return true;
-        }
-
-        // Check if drive has graduation_year criteria
-        if (
-          drive.criteria &&
-          drive.criteria.graduation_year &&
-          Array.isArray(drive.criteria.graduation_year) &&
-          drive.criteria.graduation_year.length > 0
-        ) {
-          // Check if any filter year matches any eligible graduation year
-          return filterYears.some((filterYear) =>
-            drive.criteria.graduation_year.includes(filterYear)
-          );
-        }
-
-        // If no graduation_year criteria set, show for all graduation years
-        return true;
-      })();
-
-      return (
-        matchesBasicSearch &&
-        matchesRoleSearch &&
-        matchesStatus &&
-        matchesType &&
-        matchesLocation &&
-        matchesGraduationYear
-      );
-    });
-  };
-
-  // Apply filters to drives
-  const filteredDrives = Array.isArray(drives) ? applyFilters(drives) : [];
-
-  // Map backend drive data to frontend job format
-  const jobData = filteredDrives.map((drive) => ({
+  const jobData = drives.map((drive) => ({
     id: drive._id,
     company: drive.company_name || "Unknown Company",
     type: drive.type_of_role || "Unknown",
@@ -340,9 +191,6 @@ const Main = ({ searchTerm = "", filters = {} }) => {
     return <div>Loading drives...</div>;
   }
 
-  // Show filter results count
-  const totalDrives = drives.length;
-  const filteredCount = filteredDrives.length;
   const hasActiveFilters =
     Object.values(filters).some((filter) =>
       Array.isArray(filter) ? filter.length > 0 : Boolean(filter)
@@ -350,13 +198,11 @@ const Main = ({ searchTerm = "", filters = {} }) => {
 
   return (
     <div className="p-4 sm:p-6 mx-2 sm:mx-5">
-      {/* Filter Results Header */}
       {hasActiveFilters && (
         <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
           <div className="text-sm text-gray-600">
-            Showing <strong>{filteredCount}</strong> of{" "}
-            <strong>{totalDrives}</strong> drives
-            {filteredCount !== totalDrives && (
+            Showing <strong>{filteredCount}</strong> drives
+            {hasActiveFilters && (
               <span className="text-coral-red ml-1">(filtered)</span>
             )}
           </div>

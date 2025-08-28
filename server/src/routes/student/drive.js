@@ -83,12 +83,58 @@ router.post('/add-applicant/:driveId', protectRoute, async (req, res) => {
 
 router.get('/all', protectRoute, async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1; // Default to page 1
-        const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const totalDrives = await Drive.countDocuments();
-        const drives = await Drive.find({})
+        const { searchTerm, searchRole, status, type, location, locationSearch, batch } = req.query;
+
+        let query = {};
+
+        if (searchRole) {
+            const searchRegex = new RegExp(searchRole, 'i');
+            query.$or = [
+                { company_name: searchRegex },
+                { drive_name: searchRegex },
+                { type_of_role: searchRegex }
+            ];
+        }
+        
+        if (status) {
+            const statusFilters = status.split(',');
+            query.$and = (query.$and || []).concat(statusFilters.map(s => {
+                if (s === 'live') {
+                    return { isActive: true, acceptingApplications: true, deadline: { $gt: new Date() } };
+                } else if (s === 'past') {
+                    return { $or: [{ isActive: false }, { acceptingApplications: false }, { deadline: { $lte: new Date() } }] };
+                }
+                return {};
+            }));
+        }
+
+        if (type) {
+            const escapeRegex = (string) => {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+            };
+            const typeFilters = type.split(',');
+            query.type_of_role = { $in: typeFilters.map(t => new RegExp('^' + escapeRegex(t.trim()) + '$', 'i')) };
+        }
+
+        if (location) {
+             const locationFilters = location.split(',');
+             query.location = { $in: locationFilters.map(t => new RegExp(t, 'i')) };
+        }
+
+        if (batch) {
+            const batchFilters = batch.split(',').map(y => parseInt(y, 10)).filter(y => !isNaN(y));
+            if(batchFilters.length > 0) {
+                query['criteria.graduation_year'] = { $in: batchFilters };
+            }
+        }
+
+        const totalDrives = await Drive.countDocuments(query);
+        const drives = await Drive.find(query)
+            .sort({ drive_date: -1 })
             .skip(skip)
             .limit(limit);
 

@@ -2,7 +2,7 @@
 import React, { useState, useContext } from "react";
 import Navbar from "../components/Navbar";
 import { login_img } from "../assets";
-import { login } from "../API/authentication";
+import { login, signup } from "../API/authentication";
 import { useNavigate } from "react-router-dom";
 import { toastService } from "../components/Toast";
 import { StudentCredContext } from "../contexts/StudentCredContext";
@@ -11,9 +11,11 @@ import { StudentCredContext } from "../contexts/StudentCredContext";
 const LoginPage = () => {
   // State management
   const [userType, setUserType] = useState("student");
+  const [isSignup, setIsSignup] = useState(false); // Toggle between login and signup
   const [formData, setFormData] = useState({
     username: "",
-    password: ""
+    password: "",
+    confirmPassword: "" // Only used for signup
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,49 +49,82 @@ const LoginPage = () => {
       return;
     }
 
+    // Additional validation for signup
+    if (isSignup) {
+      if (!formData.confirmPassword) {
+        toastService.warning("Please confirm your password");
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        toastService.error("Passwords do not match");
+        return;
+      }
+      if (formData.password.length < 6) {
+        toastService.warning("Password must be at least 6 characters long");
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
-      // Attempt login with provided credentials
-      const response = await login(
-        formData.username,
-        formData.password,
-        userType
-      );
+      let response;
 
-      console.log("Login response:", response);
+      if (isSignup) {
+        // Only students can signup
+        response = await signup(formData.username, formData.password);
 
-      if (response.login) {
-        // Store only user type in secure context (no sensitive data in localStorage)
-        updateStudentCreds(response.userType);
+        if (response.success) {
+          // Store user type in secure context
+          updateStudentCreds(response.userType);
 
-        console.log(
-          "Authentication successful for user type:",
-          response.userType
-        );
-
-        // Route navigation based on user type and profile completion
-        if (userType === "student") {
-          if (!response.profileComplete) {
-            toastService.info("Profile completion required");
-            navigate("/complete-profile");
-          } else {
-            toastService.success("Login successful! Welcome back");
-            navigate("/dashboard");
-          }
-        } else if (userType === "coordinator") {
-          toastService.success("Login successful! Welcome, Coordinator");
-          navigate("/coordinator/dashboard");
+          toastService.success(
+            "Registration successful! Please complete your profile"
+          );
+          navigate("/complete-profile");
+        } else {
+          toastService.error(response.message || "Registration failed");
         }
       } else {
-        toastService.error(
-          response.message || "Login failed. Please check your credentials"
-        );
+        // Login flow
+        response = await login(formData.username, formData.password, userType);
+
+        console.log("Login response:", response);
+
+        if (response.login) {
+          // Store only user type in secure context (no sensitive data in localStorage)
+          updateStudentCreds(response.userType);
+
+          console.log(
+            "Authentication successful for user type:",
+            response.userType
+          );
+
+          // Route navigation based on user type and profile completion
+          if (userType === "student") {
+            if (!response.profileComplete) {
+              toastService.info("Profile completion required");
+              navigate("/complete-profile");
+            } else {
+              toastService.success("Login successful! Welcome back");
+              navigate("/dashboard");
+            }
+          } else if (userType === "coordinator") {
+            toastService.success("Login successful! Welcome, Coordinator");
+            navigate("/coordinator/dashboard");
+          }
+        } else {
+          toastService.error(
+            response.message || "Login failed. Please check your credentials"
+          );
+        }
       }
     } catch (error) {
-      // Handle login errors
-      toastService.error("Login failed. Please try again later");
-      console.error("Login error:", error);
+      // Handle login/signup errors
+      toastService.error(
+        `${isSignup ? "Registration" : "Login"} failed. Please try again later`
+      );
+      console.error(`${isSignup ? "Signup" : "Login"} error:`, error);
     } finally {
       setIsLoading(false);
     }
@@ -99,6 +134,11 @@ const LoginPage = () => {
   const handleUserTypeChange = (type) => {
     setUserType(type);
 
+    // Reset signup mode when switching to coordinator (only students can signup)
+    if (type === "coordinator" && isSignup) {
+      setIsSignup(false);
+    }
+
     // Capitalize existing username if switching to student and username exists
     if (type === "student" && formData.username) {
       setFormData((prev) => ({
@@ -107,7 +147,21 @@ const LoginPage = () => {
       }));
     }
 
-    toastService.info(`Switched to ${type} login`);
+    toastService.info(`Switched to ${type} ${isSignup ? "signup" : "login"}`);
+  };
+
+  // Handle login/signup toggle
+  const handleModeToggle = () => {
+    setIsSignup(!isSignup);
+
+    // Clear form when switching modes
+    setFormData({
+      username: "",
+      password: "",
+      confirmPassword: ""
+    });
+
+    toastService.info(`Switched to ${!isSignup ? "signup" : "login"} mode`);
   };
 
   return (
@@ -121,37 +175,67 @@ const LoginPage = () => {
         <div className="w-full mt-9 md:w-1/2 flex flex-col justify-center items-center p-8">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-semibold text-center mb-2 text-gray-800">
-              Welcome Back
+              {isSignup ? "Create Account" : "Welcome Back"}
             </h1>
             <p className="text-center text-gray-500 mb-6">
-              Select your account type
+              {isSignup ? "Join us as a student" : "Select your account type"}
             </p>
 
+            {/* Login/Signup Toggle (only for students) */}
+            {userType === "student" && (
+              <div className="flex rounded-md overflow-hidden mb-4 border border-gray-200 shadow-sm">
+                <button
+                  type="button"
+                  className={`w-1/2 py-2 text-center font-medium transition-all duration-200 ${
+                    !isSignup
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                  onClick={() => !isSignup || handleModeToggle()}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  className={`w-1/2 py-2 text-center font-medium transition-all duration-200 ${
+                    isSignup
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                  onClick={() => isSignup || handleModeToggle()}
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+
             {/* User Type Selection Buttons */}
-            <div className="flex rounded-md overflow-hidden mb-6 border border-gray-200 shadow-sm">
-              <button
-                type="button"
-                className={`w-1/2 py-2 text-center font-medium transition-all duration-200 ${
-                  userType === "student"
-                    ? "bg-gray-800 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-50"
-                }`}
-                onClick={() => handleUserTypeChange("student")}
-              >
-                Student
-              </button>
-              <button
-                type="button"
-                className={`w-1/2 py-2 text-center font-medium transition-all duration-200 ${
-                  userType === "coordinator"
-                    ? "bg-gray-800 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-50"
-                }`}
-                onClick={() => handleUserTypeChange("coordinator")}
-              >
-                Coordinator
-              </button>
-            </div>
+            {!isSignup && (
+              <div className="flex rounded-md overflow-hidden mb-6 border border-gray-200 shadow-sm">
+                <button
+                  type="button"
+                  className={`w-1/2 py-2 text-center font-medium transition-all duration-200 ${
+                    userType === "student"
+                      ? "bg-gray-800 text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                  onClick={() => handleUserTypeChange("student")}
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  className={`w-1/2 py-2 text-center font-medium transition-all duration-200 ${
+                    userType === "coordinator"
+                      ? "bg-gray-800 text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  }`}
+                  onClick={() => handleUserTypeChange("coordinator")}
+                >
+                  Coordinator
+                </button>
+              </div>
+            )}
 
             {/* Login Form */}
             <form className="space-y-4" onSubmit={handleSubmit}>
@@ -193,12 +277,40 @@ const LoginPage = () => {
                   required
                 />
               </div>
+
+              {/* Confirm Password field - only show for signup */}
+              {isSignup && (
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-gray-800 focus:border-gray-800 transition-all duration-200"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+              )}
+
               <button
                 type="submit"
                 className="w-full bg-red-500 text-white py-2.5 rounded-md font-medium hover:bg-red-400 transition-all duration-200 shadow-sm disabled:bg-red-300 disabled:cursor-not-allowed"
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading
+                  ? isSignup
+                    ? "Creating Account..."
+                    : "Logging in..."
+                  : isSignup
+                  ? "Create Account"
+                  : "Login"}
               </button>
             </form>
           </div>

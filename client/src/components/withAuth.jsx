@@ -15,7 +15,7 @@ const withAuth = (WrappedComponent, allowedRole = null) => {
       if (!userId) {
         console.log("Not authenticated, redirecting to /login");
         toastService.error("You must be logged in to access this page");
-        navigate("/login", { replace: true });
+        navigate("/", { replace: true });
       } else if (allowedRole && userType !== allowedRole) {
         console.log(`Role mismatch: ${userType} !== ${allowedRole}`);
         toastService.error(`Only ${allowedRole}s can access this page`);

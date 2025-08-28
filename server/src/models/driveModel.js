@@ -223,6 +223,13 @@ const drive = new mongoose.Schema({
     }]
 });
 
+// Add indexes for performance
+drive.index({ coordinator: 1 });
+drive.index({ isActive: 1, acceptingApplications: 1, deadline: -1 });
+drive.index({ company_name: 'text', drive_name: 'text', type_of_role: 'text' });
+drive.index({ drive_date: -1 });
+drive.index({ 'criteria.graduation_year': 1 });
+
 // On Delete Cascade when a drive is deleted remove the drive reference from all students' applied_drives
 drive.pre('remove', async function (next) {
     try {

@@ -1,4 +1,5 @@
 import { IoLocationOutline, IoCalendarOutline } from "react-icons/io5";
+import React from "react";
 
 const JobListCard = ({ job }) => {
   // Handle location as either an array or a single value
@@ -74,4 +75,4 @@ const JobListCard = ({ job }) => {
   );
 };
 
-export default JobListCard;
+export default React.memo(JobListCard);

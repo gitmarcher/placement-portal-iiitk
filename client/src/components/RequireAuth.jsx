@@ -12,7 +12,7 @@ const RequireAuth = ({ children, allowedRole }) => {
     // Check if the user is authenticated
     if (!userId) {
       toastService.error("You must be logged in to access this page"); // Optional
-      navigate("/login", { replace: true });
+      navigate("/", { replace: true });
       return;
     }
 

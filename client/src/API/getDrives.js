@@ -1,33 +1,33 @@
 // src/api/driveApi.js
-import api from "./index";
+import axios from 'axios';
 
-const fetchDrives = async (page = 1, limit = 10) => {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+export const fetchDrives = async (page = 1, limit = 10, filters = {}, searchTerm = "") => {
     try {
-        const response = await api.get("/student/drive/all", {
-            params: { page, limit }, // Add pagination parameters
+        const params = new URLSearchParams({
+            page,
+            limit,
         });
 
-        // Log raw response for debugging
-        console.log('Raw drive data:', response.data);
+        if (searchTerm) {
+            params.append('searchRole', searchTerm);
+        }
 
-        // Ensure response.data.drives is an array
-        return {
-            drives: Array.isArray(response.data.drives) ? response.data.drives : [],
-            totalPages: response.data.totalPages || 1,
-            currentPage: response.data.currentPage || page, // Use requested page if not provided
-            totalDrives: response.data.totalDrives || 0
-        };
+        Object.keys(filters).forEach(key => {
+            const value = filters[key];
+            if (value && (!Array.isArray(value) || value.length > 0)) {
+                params.append(key, Array.isArray(value) ? value.join(',') : value);
+            }
+        });
+
+        const response = await axios.get(`${API_URL}/api/student/drive/all?${params.toString()}`, {
+            withCredentials: true
+        });
+        
+        return response.data;
     } catch (error) {
         console.error('Error fetching drives:', error);
-        console.error('Error response:', error.response?.data); // Log error details if available
-        // Return a default structure on error
-        return {
-            drives: [],
-            totalPages: 1,
-            currentPage: page,
-            totalDrives: 0
-        };
+        throw error;
     }
 };
-
-export { fetchDrives };

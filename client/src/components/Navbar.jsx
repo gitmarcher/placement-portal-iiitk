@@ -29,7 +29,7 @@ const Navbar = () => {
         updateStudentCreds("", "", "");
 
         toastService.success(response.message || "Logged out successfully");
-        navigate("/login"); // Redirect to login page
+        navigate("/"); // Redirect to login page
       } else {
         toastService.error(response.message || "Logout failed");
       }
@@ -72,7 +72,7 @@ const Navbar = () => {
 
           {/* Logo and title */}
           <Link
-            to={isAuthenticated ? getDashboardUrl() : "/login"}
+            to={isAuthenticated ? getDashboardUrl() : "/"}
             className="flex items-center gap-x-2"
           >
             <img src={logo} alt="Logo" className="h-8" />

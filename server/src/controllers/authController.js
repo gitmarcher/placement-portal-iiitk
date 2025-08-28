@@ -113,9 +113,52 @@ const login = async (req, res) => {
     }
 };
 
+// Student signup function
+const signup = async (req, res) => {
+    const { username, password } = req.body;
+
+    // Validate input
+    if (!username || !password) {
+        return res.status(400).json({ error: "Username and password are required" });
+    }
+
+    try {
+        // Check if user already exists
+        const existingUser = await StudentCred.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create new student credentials
+        const newStudentCred = new StudentCred({
+            username,
+            password: hashedPassword,
+            lastLogin: new Date(),
+        });
+
+        await newStudentCred.save();
+
+        // Generate token and set cookie for immediate login after signup
+        generateTokenAndSetCookie(newStudentCred._id.toString(), newStudentCred.username, 'student', res);
+
+        res.status(201).json({ 
+            userType: 'student',
+            message: 'Registration successful, please complete your profile.' 
+        });
+
+    } catch (error) {
+        console.error('Error in signup controller:', error.message);
+        res.status(500).json({ error: "Internal Server error during registration" });
+    }
+};
+
 // export
 module.exports = {
     login,
     logout,
-    verify
+    verify,
+    signup
 };

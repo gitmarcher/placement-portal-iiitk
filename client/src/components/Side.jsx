@@ -45,7 +45,7 @@ const Sidebar = ({ onToggleCalendar }) => {
         updateStudentCreds("", "", "");
 
         toastService.success(response.message || "Logged out successfully");
-        navigate("/login"); // Redirect to login page
+        navigate("/"); // Redirect to login page
       } else {
         toastService.error(response.message || "Logout failed");
       }

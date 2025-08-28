@@ -15,7 +15,7 @@ const Unauthorized = ({ userRole, attemptedAccess }) => {
     } else if (userRole === "coordinator") {
       navigate("/coordinator/dashboard");
     } else {
-      navigate("/login");
+      navigate("/");
     }
   };
 
